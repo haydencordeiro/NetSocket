@@ -5,45 +5,54 @@
 #include <arpa/inet.h>
 
 #define PORT 8080
-#define BUFFER_SIZE 1024
+
+int create_socket() {
+    int client_socket;
+    if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+    return client_socket;
+}
+
+void connect_to_server(int client_socket) {
+    struct sockaddr_in server_address;
+    if (inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr) <= 0) {
+        perror("Invalid address/ Address not supported");
+        exit(EXIT_FAILURE);
+    }
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(PORT);
+    if (connect(client_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0) {
+        perror("Connection failed");
+        exit(EXIT_FAILURE);
+    }
+}
 
 int main() {
-    int sock = 0, valread;
-    struct sockaddr_in serv_addr;
-    char *hello = "Hello from client";
-    char buffer[BUFFER_SIZE] = {0};
+    int client_socket = create_socket();
+    connect_to_server(client_socket);
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Socket creation error \n");
-        return -1;
-    }
+    char buffer[1024] = {0};
+    // Request Server for File
+    char *message = "Send File Please";
+    send(client_socket, message, strlen(message), 0);
+    // Reading State of file byte sequence
+    read(client_socket, buffer, 2);
+    printf("Start sequence: %s\n", buffer);
+    memset(buffer, 0, sizeof(buffer));
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
+    // Reading data of file
+    read(client_socket, buffer, 1);
+    printf("Data: %s\n", buffer);
+    memset(buffer, 0, sizeof(buffer));
 
-    // Convert IPv4 and IPv6 addresses from text to binary form
-    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) {
-        printf("\nInvalid address/ Address not supported \n");
-        return -1;
-    }
 
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        printf("\nConnection Failed \n");
-        return -1;
-    }
-    while(1) {
-        // Send message to server
-        send(sock, hello, strlen(hello), 0);
-        printf("Client: %s\n", hello);
-        // Read message from server
-        valread = read(sock, buffer, BUFFER_SIZE);
-        if (valread == 0) {
-            printf("Server disconnected\n");
-            break;
-        }
-        printf("Server: %s\n",buffer);
-        memset(buffer, 0, BUFFER_SIZE);
-    }
-    close(sock);
+    // Reading End of file of file byte sequence
+    read(client_socket, buffer, 2);
+    printf("eof: %s\n", buffer);
+    memset(buffer, 0, sizeof(buffer));
+
+    close(client_socket);
     return 0;
 }
