@@ -65,12 +65,13 @@ int main()
     // Request Server for FileintToBinaryString
     char *message = "Send File Please";
     send(client_socket, message, strlen(message), 0);
-    // Reading State of file byte sequence
+    // Reading size of file
     read(client_socket, buffer, 32);
+    // converting the binary string to int
     int fileSize = binaryStringToInt(buffer);
     printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
-
+    // Creating and opening the file for writing
     char *outputFilename = "./outputFilename.pdf";
     int output_fd = open(outputFilename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (output_fd == -1)
@@ -78,7 +79,7 @@ int main()
         perror("Error creating output file");
         exit(EXIT_FAILURE);
     }
-    printf("Incoming File Size %d\n", fileSize);
+    // Writing the file data
     for (int i = 0; i < fileSize; i++)
     {
         read(client_socket, buffer, 1);
@@ -87,12 +88,6 @@ int main()
         memset(buffer, 0, sizeof(buffer));
     }
     close(output_fd);
-    // Reading data of file
-
-    // Reading End of file of file byte sequence
-    // read(client_socket, buffer, 2);
-    // printf("eof: %s\n", buffer);
-    // memset(buffer, 0, sizeof(buffer));
 
     close(client_socket);
     return 0;

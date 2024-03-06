@@ -96,28 +96,36 @@ int accept_client(int server_socket)
     return client_socket;
 }
 
-char *int_to_binary(int num)
+
+void sendFile(int client_socket)
 {
-    // Allocate memory for the binary string
-    char *binary_str = (char *)malloc(9 * sizeof(char)); // 8 bits + 1 for null terminator
-    if (binary_str == NULL)
+    char buffer[1024] = {0};
+
+    // Sending Start of file byte sequence
+    char *fileName = "./serverDir/1temp.pdf";
+    // Calculating file size to send to client
+    int fileSize = getFileSize(fileName);
+    // Convert the file size to binary string
+    char *fileSizeString = intToBinaryString(fileSize);
+    // Logging size and binary
+    printf("%d File size %s", fileSize, fileSizeString);
+    // opening the file to read
+    int input_fd = open(fileName, O_RDONLY);
+    if (input_fd == -1)
     {
-        fprintf(stderr, "Memory allocation failed\n");
+        perror("Error opening input file");
         exit(EXIT_FAILURE);
     }
-
-    // Ensure the string is null-terminated
-    binary_str[8] = '\0';
-
-    // Convert the integer to binary
-    int i;
-    for (i = 7; i >= 0; i--)
+    // Sending the file size
+    send(client_socket, fileSizeString, 32, 0);
+    // Sending File Data
+    for (int i = 0; i < fileSize; i++)
     {
-        binary_str[i] = (num & 1) + '0'; // Convert the least significant bit to ASCII
-        num >>= 1;                       // Shift the number to the right
+        char *tempBuffer;
+        read(input_fd, tempBuffer, 1);
+        send(client_socket, tempBuffer, 1, 0);
     }
 
-    return binary_str;
 }
 
 int main()
@@ -136,34 +144,7 @@ int main()
 
     // Server responds with message
 
-    // Sending Start of file byte sequence
-    char *fileName = "./serverDir/1temp.pdf";
-    int fileSize = getFileSize(fileName);
-
-    char *fileDataToBeSend = "This is \nfile data";
-    char *fileSizeString = intToBinaryString(fileSize);
-    char *FileSendOver = "-1";
-    printf("%d File size %s", fileSize, fileSizeString);
-
-    int input_fd = open(fileName, O_RDONLY);
-    if (input_fd == -1)
-    {
-        perror("Error opening input file");
-        exit(EXIT_FAILURE);
-    }
-    printf("Sending %s", fileSizeString);
-    send(client_socket, fileSizeString, 32, 0);
-    // Sending File Data
-    for (int i = 0; i < fileSize; i++)
-    {
-        printf("Sending data %d\n", i);
-        char *tempBuffer;
-        read(input_fd, tempBuffer, 1);
-        send(client_socket, tempBuffer, 1, 0);
-    }
-    // End of file byte
-    // send(client_socket, FileSendOver, 2, 0);
-
+    sendFile(client_socket);
     close(client_socket);
     close(server_socket);
     return 0;
