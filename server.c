@@ -3,29 +3,32 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-
+#include <unistd.h>
+#include <fcntl.h>
 #define PORT 8080
 
-char* intToBinaryString(int num) {
+char *intToBinaryString(int num)
+{
     // Determine the number of bits needed to represent the number
-       char* bitString = (char*)malloc(9); // 8 bits + 1 for the null terminator
-    if (bitString == NULL) {
+    char *bitString = (char *)malloc(33); // 8 bits + 1 for the null terminator
+    if (bitString == NULL)
+    {
         printf("Memory allocation failed\n");
         exit(1);
     }
-    bitString[8] = '\0'; // Null terminator
+    bitString[32] = '\0'; // Null terminator
 
     // Iterate through each bit of the number and set the corresponding bit in the string
-    for (int i = 7; i >= 0; i--) {
+    for (int i = 31; i >= 0; i--)
+    {
         if (num & (1 << i))
-            bitString[7 - i] = '1';
+            bitString[31 - i] = '1';
         else
-            bitString[7 - i] = '0';
+            bitString[31 - i] = '0';
     }
 
     return bitString;
 }
-
 
 int create_socket()
 {
@@ -66,6 +69,20 @@ void listen_for_clients(int server_socket)
     }
 }
 
+int getFileSize(char *filePath)
+{
+    int input_fd = open(filePath, O_RDONLY);
+    if (input_fd == -1)
+    {
+        perror("Error opening input file");
+        exit(EXIT_FAILURE);
+    }
+    int c = lseek(input_fd, 0, SEEK_END);
+    // printf("%d this is \n",c);
+    close(input_fd);
+    return c;
+}
+
 int accept_client(int server_socket)
 {
     int client_socket;
@@ -79,24 +96,27 @@ int accept_client(int server_socket)
     return client_socket;
 }
 
-char* int_to_binary(int num) {
+char *int_to_binary(int num)
+{
     // Allocate memory for the binary string
-    char* binary_str = (char*)malloc(9 * sizeof(char)); // 8 bits + 1 for null terminator
-    if (binary_str == NULL) {
+    char *binary_str = (char *)malloc(9 * sizeof(char)); // 8 bits + 1 for null terminator
+    if (binary_str == NULL)
+    {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
-    
+
     // Ensure the string is null-terminated
     binary_str[8] = '\0';
-    
+
     // Convert the integer to binary
     int i;
-    for (i = 7; i >= 0; i--) {
+    for (i = 7; i >= 0; i--)
+    {
         binary_str[i] = (num & 1) + '0'; // Convert the least significant bit to ASCII
-        num >>= 1; // Shift the number to the right
+        num >>= 1;                       // Shift the number to the right
     }
-    
+
     return binary_str;
 }
 
@@ -117,14 +137,32 @@ int main()
     // Server responds with message
 
     // Sending Start of file byte sequence
-    char *message = intToBinaryString(3);
-    send(client_socket, message, 8, 0);
+    char *fileName = "./serverDir/1temp.pdf";
+    int fileSize = getFileSize(fileName);
+
+    char *fileDataToBeSend = "This is \nfile data";
+    char *fileSizeString = intToBinaryString(fileSize);
+    char *FileSendOver = "-1";
+    printf("%d File size %s", fileSize, fileSizeString);
+
+    int input_fd = open(fileName, O_RDONLY);
+    if (input_fd == -1)
+    {
+        perror("Error opening input file");
+        exit(EXIT_FAILURE);
+    }
+    printf("Sending %s", fileSizeString);
+    send(client_socket, fileSizeString, 32, 0);
     // Sending File Data
-    char *message2 = "This is file data";
-    send(client_socket, message2, 21, 0);
+    for (int i = 0; i < fileSize; i++)
+    {
+        printf("Sending data %d\n", i);
+        char *tempBuffer;
+        read(input_fd, tempBuffer, 1);
+        send(client_socket, tempBuffer, 1, 0);
+    }
     // End of file byte
-    char *message3 = "-1";
-    send(client_socket, message3, 2, 0);
+    // send(client_socket, FileSendOver, 2, 0);
 
     close(client_socket);
     close(server_socket);
