@@ -6,6 +6,27 @@
 
 #define PORT 8080
 
+char* intToBinaryString(int num) {
+    // Determine the number of bits needed to represent the number
+       char* bitString = (char*)malloc(9); // 8 bits + 1 for the null terminator
+    if (bitString == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+    bitString[8] = '\0'; // Null terminator
+
+    // Iterate through each bit of the number and set the corresponding bit in the string
+    for (int i = 7; i >= 0; i--) {
+        if (num & (1 << i))
+            bitString[7 - i] = '1';
+        else
+            bitString[7 - i] = '0';
+    }
+
+    return bitString;
+}
+
+
 int create_socket()
 {
     int server_socket;
@@ -58,6 +79,27 @@ int accept_client(int server_socket)
     return client_socket;
 }
 
+char* int_to_binary(int num) {
+    // Allocate memory for the binary string
+    char* binary_str = (char*)malloc(9 * sizeof(char)); // 8 bits + 1 for null terminator
+    if (binary_str == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    // Ensure the string is null-terminated
+    binary_str[8] = '\0';
+    
+    // Convert the integer to binary
+    int i;
+    for (i = 7; i >= 0; i--) {
+        binary_str[i] = (num & 1) + '0'; // Convert the least significant bit to ASCII
+        num >>= 1; // Shift the number to the right
+    }
+    
+    return binary_str;
+}
+
 int main()
 {
     int server_socket = create_socket();
@@ -75,11 +117,11 @@ int main()
     // Server responds with message
 
     // Sending Start of file byte sequence
-    char *message = "+1";
-    send(client_socket, message, 2, 0);
+    char *message = intToBinaryString(3);
+    send(client_socket, message, 8, 0);
     // Sending File Data
     char *message2 = "This is file data";
-    send(client_socket, message2, 1, 0);
+    send(client_socket, message2, 21, 0);
     // End of file byte
     char *message3 = "-1";
     send(client_socket, message3, 2, 0);

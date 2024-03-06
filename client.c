@@ -3,8 +3,25 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <math.h>
+
 
 #define PORT 8080
+
+// Function to convert a binary string to an integer
+int binaryStringToInt(const char* binaryString) {
+    int num = 0;
+    int len = strlen(binaryString);
+    
+    // Iterate through each character of the string
+    for (int i = 0; i < len; i++) {
+        if (binaryString[i] == '1') {
+            num |= (1 << (len - i - 1));
+        }
+    }
+
+    return num;
+}
 
 int create_socket() {
     int client_socket;
@@ -34,16 +51,16 @@ int main() {
     connect_to_server(client_socket);
 
     char buffer[1024] = {0};
-    // Request Server for File
-    char *message = "Send File Please";
+    // Request Server for FileintToBinaryString
+    char *message = "Send File PleasintToBinaryStringe";
     send(client_socket, message, strlen(message), 0);
     // Reading State of file byte sequence
-    read(client_socket, buffer, 2);
-    printf("Start sequence: %s\n", buffer);
+    read(client_socket, buffer, 8);
+    printf("Start sequence: %d\n", binaryStringToInt(buffer));
     memset(buffer, 0, sizeof(buffer));
 
     // Reading data of file
-    read(client_socket, buffer, 1);
+    read(client_socket, buffer, 21);
     printf("Data: %s\n", buffer);
     memset(buffer, 0, sizeof(buffer));
 
