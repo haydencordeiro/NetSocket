@@ -117,14 +117,14 @@ int main()
     // Server responds with message
 
     // Sending Start of file byte sequence
-    char *message = intToBinaryString(3);
-    send(client_socket, message, 8, 0);
+    char *fileSize = intToBinaryString(3);
+    send(client_socket, fileSize, 8, 0);
     // Sending File Data
-    char *message2 = "This is file data";
-    send(client_socket, message2, 21, 0);
+    char *fileDataToBeSend = "This is file data";
+    send(client_socket, fileDataToBeSend, 21, 0);
     // End of file byte
-    char *message3 = "-1";
-    send(client_socket, message3, 2, 0);
+    char *FileSendOver = "-1";
+    send(client_socket, FileSendOver, 2, 0);
 
     close(client_socket);
     close(server_socket);
