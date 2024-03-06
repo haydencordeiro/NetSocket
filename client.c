@@ -56,19 +56,24 @@ int main() {
     send(client_socket, message, strlen(message), 0);
     // Reading State of file byte sequence
     read(client_socket, buffer, 8);
+    int fileSize = binaryStringToInt(buffer);
     printf("Start sequence: %d\n", binaryStringToInt(buffer));
     memset(buffer, 0, sizeof(buffer));
 
-    // Reading data of file
-    read(client_socket, buffer, 21);
+
+    for(int i = 0; i< fileSize; i++){
+    read(client_socket, buffer, 1);
     printf("Data: %s\n", buffer);
     memset(buffer, 0, sizeof(buffer));
+    }
+
+    // Reading data of file
 
 
     // Reading End of file of file byte sequence
-    read(client_socket, buffer, 2);
-    printf("eof: %s\n", buffer);
-    memset(buffer, 0, sizeof(buffer));
+    // read(client_socket, buffer, 2);
+    // printf("eof: %s\n", buffer);
+    // memset(buffer, 0, sizeof(buffer));
 
     close(client_socket);
     return 0;
