@@ -164,14 +164,20 @@ void sendString(int client_socket, char *s)
     }
 }
 
-void dirList(int client_socket, char option)
+void dirList(int client_socket, char *option)
 {
-    // if(option == 'a'){
-    char *temp = runPopen("cd ~ |ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
-    sendString(client_socket, temp);
-    free(temp);
-
-    // }
+    if (option == 'a')
+    {
+        char *temp = runPopen("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
+        sendString(client_socket, temp);
+        free(temp);
+    }
+    else
+    {
+        char *temp = runPopen(" stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
+        sendString(client_socket, temp);
+        free(temp);
+    }
 }
 
 int main()
@@ -191,10 +197,12 @@ int main()
     // Server responds with message
 
     // sendFile(client_socket);
-    dirList(client_socket, "c");
+    dirList(client_socket, 'c');
     close(client_socket);
     close(server_socket);
     return 0;
 }
 
-// cd ~ |ls -l ~/ | grep '^d' | awk '{print $NF}' |sort
+//  stat --format="%n %W" ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'
+
+//  stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'
