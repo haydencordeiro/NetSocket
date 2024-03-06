@@ -56,15 +56,10 @@ void connect_to_server(int client_socket)
     }
 }
 
-int main()
+void receiveFileHelper(int client_socket)
 {
-    int client_socket = create_socket();
-    connect_to_server(client_socket);
-
     char buffer[1024] = {0};
-    // Request Server for FileintToBinaryString
-    char *message = "Send File Please";
-    send(client_socket, message, strlen(message), 0);
+
     // Reading size of file
     read(client_socket, buffer, 32);
     // converting the binary string to int
@@ -88,7 +83,41 @@ int main()
         memset(buffer, 0, sizeof(buffer));
     }
     close(output_fd);
+}
 
+void receiveDataHelper(int client_socket)
+{
+    char buffer[1024] = {0};
+
+    // Reading size of file
+    read(client_socket, buffer, 32);
+    // converting the binary string to int
+    int fileSize = binaryStringToInt(buffer);
+    // printf("Start sequence: %s %d\n", buffer, fileSize);
+    memset(buffer, 0, sizeof(buffer));
+    // Creating and opening the file for writing
+
+    // Writing the file data
+    for (int i = 0; i < fileSize; i++)
+    {
+        read(client_socket, buffer, 1);
+        printf("%s", buffer);
+        memset(buffer, 0, sizeof(buffer));
+    }
+}
+
+int main()
+{
+    int client_socket = create_socket();
+    connect_to_server(client_socket);
+
+    char buffer[1024] = {0};
+    // Request Server for FileintToBinaryString
+    char *message = "Send File Please";
+    send(client_socket, message, strlen(message), 0);
+
+    receiveDataHelper(client_socket);
+    // receiveFileHelper(client_socket);
     close(client_socket);
     return 0;
 }

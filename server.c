@@ -7,6 +7,30 @@
 #include <fcntl.h>
 #define PORT 8080
 
+char *runPopen(char *str)
+{
+    FILE *fp;
+    char buffer[1024];
+    char *result = (char *)malloc(4096);
+
+    fp = popen(str, "r");
+    if (fp == NULL)
+    {
+        printf("Failed to run command\n");
+        return 1;
+    }
+
+    while (fgets(buffer, sizeof(buffer), fp) != NULL)
+    {
+        strcat(result, buffer);
+    }
+
+    pclose(fp);
+
+    char *temp = strdup(result);
+    result;
+}
+
 char *intToBinaryString(int num)
 {
     // Determine the number of bits needed to represent the number
@@ -96,7 +120,6 @@ int accept_client(int server_socket)
     return client_socket;
 }
 
-
 void sendFile(int client_socket)
 {
     char buffer[1024] = {0};
@@ -125,7 +148,30 @@ void sendFile(int client_socket)
         read(input_fd, tempBuffer, 1);
         send(client_socket, tempBuffer, 1, 0);
     }
+}
 
+void sendString(int client_socket, char *s)
+{
+    int lenght = strlen(s);
+    printf("Lenght of s %d\n", lenght);
+    char *lenghtString = intToBinaryString(lenght);
+    // Send Length
+    send(client_socket, lenghtString, 32, 0);
+    for (int i = 0; i < lenght; i++)
+    {
+        char *tempBuffer = s[i];
+        send(client_socket, &s[i], 1, 0);
+    }
+}
+
+void dirList(int client_socket, char option)
+{
+    // if(option == 'a'){
+    char *temp = runPopen("cd ~ |ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
+    sendString(client_socket, temp);
+    free(temp);
+
+    // }
 }
 
 int main()
@@ -144,8 +190,11 @@ int main()
 
     // Server responds with message
 
-    sendFile(client_socket);
+    // sendFile(client_socket);
+    dirList(client_socket, "c");
     close(client_socket);
     close(server_socket);
     return 0;
 }
+
+// cd ~ |ls -l ~/ | grep '^d' | awk '{print $NF}' |sort
