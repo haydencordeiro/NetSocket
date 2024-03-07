@@ -106,22 +106,10 @@ void receiveDataHelper(int client_socket)
     }
 }
 
-int getIntLength(int num)
-{
-    int length = 0;
-
-    // If the number is 0, its length is 1
-    if (num == 0)
-        return 1;
-
-    // Keep dividing the number by 10 until it becomes 0, and count the divisions
-    while (num != 0)
-    {
-        num = num / 10;
-        length++;
-    }
-
-    return length;
+char* add_zeros(int num) {
+    char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
+    sprintf(num_str, "%032d", num); // Format the integer with leading zeros
+    return num_str;
 }
 
 int main()
@@ -135,12 +123,13 @@ int main()
     char *command = "w24fn temp.txt";
 
     // Send lenght of the command to be received
-    send(client_socket, strlen(command), getIntLength(strlen(command)), 0);
+    send(client_socket, add_zeros(strlen(command)), 32, 0);
 
     // Send command to server
     send(client_socket, command, strlen(command), 0);
     if (strstr(command, "w24fn") != NULL)
     {
+        printf("here\n");
         receiveDataHelper(client_socket);
     }
 

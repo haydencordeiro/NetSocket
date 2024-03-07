@@ -147,6 +147,10 @@ void getStatOfFile(int client_socket, char *filePath)
     sendString(client_socket, runPopen(command));
 }
 
+void printData(char *s)
+{
+    printf("Inside pd with value %s\n", s);
+}
 void crequest(int new_socket)
 {
     // Function to handle client requests
@@ -159,7 +163,7 @@ void crequest(int new_socket)
         memset(buffer, 0, sizeof(buffer));
 
         // Read the lenght of the command that the clinet is going to send
-        read(new_socket, buffer, sizeof(buffer));
+        read(new_socket, buffer, 32);
         int sizeofCommand = atoi(buffer);
         memset(buffer, 0, sizeof(buffer));
 
@@ -167,7 +171,7 @@ void crequest(int new_socket)
         read(new_socket, buffer, sizeofCommand);
         char *command = strdup(buffer);
         memset(buffer, 0, sizeof(buffer));
-
+        // break;
         if (strcmp(command, "quitc") == 0)
         {
             // If the client sends "quitc", exit the loop and close the connection
@@ -176,6 +180,18 @@ void crequest(int new_socket)
         else if (strstr(command, "w24fn") != NULL)
         {
             getStatOfFile(new_socket, searchFiles());
+        }
+        else if (strstr(command, "w24fn -a") != NULL)
+        {
+            char *temp = runPopen("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
+            sendString(new_socket, temp);
+            free(temp);
+        }
+        else if (strstr(command, "w24fn -c") != NULL)
+        {
+            char *temp = runPopen(" stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
+            sendString(new_socket, temp);
+            free(temp);
         }
     }
 }
