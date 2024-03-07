@@ -82,13 +82,16 @@ void sendFile(int client_socket)
     }
 }
 
+// Helper method to send a String from the client to server
 void sendString(int client_socket, char *s)
 {
     int lenght = strlen(s);
     printf("Lenght of s %d\n", lenght);
+    // Conver the lenght to a string of lenght 8 to send to the client
     char *lenghtString = addZeros(lenght);
     // Send Length
     send(client_socket, lenghtString, 32, 0);
+    // Send data one byte at a time
     for (int i = 0; i < lenght; i++)
     {
         char *tempBuffer = s[i];
@@ -96,38 +99,46 @@ void sendString(int client_socket, char *s)
     }
 }
 
+// Dir list command
 void dirList(int client_socket, char *option)
 {
     if (option == 'a')
     {
+        // Use the ls command
         char *temp = runPopen("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
+        // Send the output to the client
         sendString(client_socket, temp);
         free(temp);
     }
     else
     {
-        char *temp = runPopen(" stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
+        // Use the stat command
+        char *temp = runPopen(" stat --format='%%n %%W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
+        // Send the output to the client
         sendString(client_socket, temp);
         free(temp);
     }
 }
 
-char *searchFiles()
+// Helper method to search for a given File
+char *searchFiles(char *fileName)
 {
-    char *temp = runPopen("find ~/ -name 'temp.txt'");
-    // printf("%s\Message from client: Send File Pleasen", temp);
+    char *command;
+    asprintf(&command, "find ~/ -name %s", fileName);
+    char *temp = runPopen(command);
+    printf("File Found DAta %s %s\n",command, temp);
     if (strlen(temp) == 0)
         return "-1";
     char *token = strtok(temp, "\n");
     return strdup(token);
-    // printf("%s here\n", token);
-    // printf("%d\n", strlen(temp));
 }
 
+// use the stat command to return details of the file
 void getStatOfFile(int client_socket, char *filePath)
 {
     char *command;
     asprintf(&command, "stat -c '%%n %%s %%w %%A' %s", filePath);
+    printf("Running this command %s\n",command);
     sendString(client_socket, runPopen(command));
 }
 
@@ -146,25 +157,35 @@ void crequest(int new_socket)
         // Clear the buffer
         memset(buffer, 0, sizeof(buffer));
 
-        // Read the lenght of the command that the clinet is going to send
+        // Read the lenght of the command that the client is going to send
         read(new_socket, buffer, 32);
         int sizeofCommand = atoi(buffer);
         memset(buffer, 0, sizeof(buffer));
 
-        // Get command from user
+        // Get command from the client
         read(new_socket, buffer, sizeofCommand);
         char *command = strdup(buffer);
         memset(buffer, 0, sizeof(buffer));
-        // break;
+        // Run the appropriate functions based on the command
         if (strcmp(command, "quitc") == 0)
         {
-            printf("Sever Died\n");
             // If the client sends "quitc", exit the loop and close the connection
+            printf("Sever Died\n");
             break;
         }
         else if (strstr(command, "w24fn") != NULL)
         {
-            getStatOfFile(new_socket, searchFiles());
+            // return details of the file if found
+            char *fileName = strchr(command, ' ') + 1;
+            char *filePath = searchFiles(fileName);
+            if (strcmp("-1", fileName) == 0)
+            {
+                sendString(new_socket, "Couldnt Find File");
+            }
+            else
+            {
+                getStatOfFile(new_socket, filePath);
+            }
         }
         else if (strstr(command, "dirlist -a") != NULL)
         {
