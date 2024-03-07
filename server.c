@@ -31,27 +31,11 @@ char *runPopen(char *str)
     result;
 }
 
-char *intToBinaryString(int num)
+char *addZeros(int num)
 {
-    // Determine the number of bits needed to represent the number
-    char *bitString = (char *)malloc(33); // 8 bits + 1 for the null terminator
-    if (bitString == NULL)
-    {
-        printf("Memory allocation failed\n");
-        exit(1);
-    }
-    bitString[32] = '\0'; // Null terminator
-
-    // Iterate through each bit of the number and set the corresponding bit in the string
-    for (int i = 31; i >= 0; i--)
-    {
-        if (num & (1 << i))
-            bitString[31 - i] = '1';
-        else
-            bitString[31 - i] = '0';
-    }
-
-    return bitString;
+    char *num_str = (char *)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
+    sprintf(num_str, "%032d", num);                    // Format the integer with leading zeros
+    return num_str;
 }
 
 int getFileSize(char *filePath)
@@ -77,7 +61,7 @@ void sendFile(int client_socket)
     // Calculating file size to send to client
     int fileSize = getFileSize(fileName);
     // Convert the file size to binary string
-    char *fileSizeString = intToBinaryString(fileSize);
+    char *fileSizeString = addZeros(fileSize);
     // Logging size and binary
     printf("%d File size %s", fileSize, fileSizeString);
     // opening the file to read
@@ -102,7 +86,7 @@ void sendString(int client_socket, char *s)
 {
     int lenght = strlen(s);
     printf("Lenght of s %d\n", lenght);
-    char *lenghtString = intToBinaryString(lenght);
+    char *lenghtString = addZeros(lenght);
     // Send Length
     send(client_socket, lenghtString, 32, 0);
     for (int i = 0; i < lenght; i++)

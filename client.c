@@ -10,23 +10,6 @@
 
 #define PORT 8080
 
-// Function to convert a binary string to an integer
-int binaryStringToInt(const char *binaryString)
-{
-    int num = 0;
-    int len = strlen(binaryString);
-
-    // Iterate through each character of the string
-    for (int i = 0; i < len; i++)
-    {
-        if (binaryString[i] == '1')
-        {
-            num |= (1 << (len - i - 1));
-        }
-    }
-
-    return num;
-}
 
 int create_socket()
 {
@@ -63,7 +46,7 @@ void receiveFileHelper(int client_socket)
     // Reading size of file
     read(client_socket, buffer, 32);
     // converting the binary string to int
-    int fileSize = binaryStringToInt(buffer);
+    int fileSize = atoi(buffer);
     printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
@@ -92,7 +75,7 @@ void receiveDataHelper(int client_socket)
     // Reading size of file
     read(client_socket, buffer, 32);
     // converting the binary string to int
-    int fileSize = binaryStringToInt(buffer);
+    int fileSize = atoi(buffer);
     // printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
@@ -106,7 +89,7 @@ void receiveDataHelper(int client_socket)
     }
 }
 
-char *add_zeros(int num)
+char *addZeros(int num)
 {
     char *num_str = (char *)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
     sprintf(num_str, "%032d", num);                    // Format the integer with leading zeros
@@ -129,7 +112,7 @@ int main()
         // char *command = "w24fn temp.txt";
 
         // Send lenght of the command to be received
-        send(client_socket, add_zeros(strlen(command)), 32, 0);
+        send(client_socket, addZeros(strlen(command)), 32, 0);
 
         // Send command to server
         send(client_socket, command, strlen(command), 0);
