@@ -174,6 +174,7 @@ void crequest(int new_socket)
         // break;
         if (strcmp(command, "quitc") == 0)
         {
+            printf("Sever Died\n");
             // If the client sends "quitc", exit the loop and close the connection
             break;
         }
