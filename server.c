@@ -186,15 +186,16 @@ char *searchFiles(){
     if(strlen(temp) == 0)
     return "-1";
     char *token = strtok(temp, "\n");
-    return token;
+    return strdup(token);
     // printf("%s here\n", token);
     // printf("%d\n", strlen(temp));
 }
 
-void getStatOfFile(char *filePath){
+void getStatOfFile(int client_socket, char *filePath){
     char *command;
-    asprintf(&command, "stat -c '%%n %%s %%w %%A' /home/hayden/Desktop/assignment1/temp/temp.txt' %s", filePath);
-    printf("%s here2",runPopen(command));
+    asprintf(&command, "stat -c '%%n %%s %%w %%A' %s", filePath);
+    printf("%s here2",(command));
+    sendString(client_socket, runPopen(command));
 }
 int main()
 {
@@ -215,7 +216,7 @@ int main()
     // sendFile(client_socket);
     // dirList(client_socket, 'c');
     // char *temp = runPopen("find ~/ -name 'temp123.txt'");
-    getStatOfFile(searchFiles());
+    getStatOfFile(client_socket,searchFiles());
     close(client_socket);
     close(server_socket);
     return 0;
