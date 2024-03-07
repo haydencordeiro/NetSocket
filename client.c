@@ -106,9 +106,10 @@ void receiveDataHelper(int client_socket)
     }
 }
 
-char* add_zeros(int num) {
-    char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
-    sprintf(num_str, "%032d", num); // Format the integer with leading zeros
+char *add_zeros(int num)
+{
+    char *num_str = (char *)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
+    sprintf(num_str, "%032d", num);                    // Format the integer with leading zeros
     return num_str;
 }
 
@@ -118,9 +119,9 @@ int main()
     connect_to_server(client_socket);
 
     char buffer[1024] = {0};
-    // char *commnad = "dirlist -a";
-    // char *commnad = "dirlist -t";
-    char *command = "w24fn temp.txt";
+    char *command = "dirlist -a";
+    // char *command = "dirlist -t";
+    // char *command = "w24fn temp.txt";
 
     // Send lenght of the command to be received
     send(client_socket, add_zeros(strlen(command)), 32, 0);
@@ -129,11 +130,17 @@ int main()
     send(client_socket, command, strlen(command), 0);
     if (strstr(command, "w24fn") != NULL)
     {
-        printf("here\n");
+        receiveDataHelper(client_socket);
+    }
+    else if (strstr(command, "dirlist -t") != NULL)
+    {
+        receiveDataHelper(client_socket);
+    }
+    else if (strstr(command, "dirlist -a") != NULL)
+    {
         receiveDataHelper(client_socket);
     }
 
-    // receiveFileHelper(client_socket);
     close(client_socket);
     return 0;
 }

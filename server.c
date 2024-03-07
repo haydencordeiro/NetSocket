@@ -181,13 +181,13 @@ void crequest(int new_socket)
         {
             getStatOfFile(new_socket, searchFiles());
         }
-        else if (strstr(command, "w24fn -a") != NULL)
+        else if (strstr(command, "dirlist -a") != NULL)
         {
             char *temp = runPopen("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
             sendString(new_socket, temp);
             free(temp);
         }
-        else if (strstr(command, "w24fn -c") != NULL)
+        else if (strstr(command, "dirlist -t") != NULL)
         {
             char *temp = runPopen(" stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
             sendString(new_socket, temp);
