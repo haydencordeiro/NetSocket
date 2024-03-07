@@ -10,23 +10,6 @@
 
 #define PORT 8080
 
-// Function to convert a binary string to an integer
-int binaryStringToInt(const char *binaryString)
-{
-    int num = 0;
-    int len = strlen(binaryString);
-
-    // Iterate through each character of the string
-    for (int i = 0; i < len; i++)
-    {
-        if (binaryString[i] == '1')
-        {
-            num |= (1 << (len - i - 1));
-        }
-    }
-
-    return num;
-}
 
 int create_socket()
 {
@@ -63,7 +46,7 @@ void receiveFileHelper(int client_socket)
     // Reading size of file
     read(client_socket, buffer, 32);
     // converting the binary string to int
-    int fileSize = binaryStringToInt(buffer);
+    int fileSize = atoi(buffer);
     printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
@@ -92,7 +75,7 @@ void receiveDataHelper(int client_socket)
     // Reading size of file
     read(client_socket, buffer, 32);
     // converting the binary string to int
-    int fileSize = binaryStringToInt(buffer);
+    int fileSize = atoi(buffer);
     // printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
@@ -106,18 +89,49 @@ void receiveDataHelper(int client_socket)
     }
 }
 
+char *addZeros(int num)
+{
+    char *num_str = (char *)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
+    sprintf(num_str, "%032d", num);                    // Format the integer with leading zeros
+    return num_str;
+}
+
 int main()
 {
     int client_socket = create_socket();
     connect_to_server(client_socket);
+    char command[1024];
+    while (1)
+    {
+        // char buffer[1024] = {0};
+        // scanf("%[^\n]s", command);
+        fgets(command, 1024, stdin);
 
-    char buffer[1024] = {0};
-    // Request Server for FileintToBinaryString
-    char *message = "Send File Please";
-    send(client_socket, message, strlen(message), 0);
+        printf("user entered %s\n", command);
+        // char *command = "dirlist -t";
+        // char *command = "w24fn temp.txt";
 
-    receiveDataHelper(client_socket);
-    // receiveFileHelper(client_socket);
-    close(client_socket);
-    return 0;
+        // Send lenght of the command to be received
+        send(client_socket, addZeros(strlen(command)), 32, 0);
+
+        // Send command to server
+        send(client_socket, command, strlen(command), 0);
+        if (strstr(command, "w24fn") != NULL)
+        {
+            receiveDataHelper(client_socket);
+        }
+        else if (strstr(command, "dirlist -t") != NULL)
+        {
+            receiveDataHelper(client_socket);
+        }
+        else if (strstr(command, "dirlist -a") != NULL)
+        {
+            receiveDataHelper(client_socket);
+        }
+        else if (strstr(command, "quitc") != NULL)
+        {
+            close(client_socket);
+            return 0;
+        }
+    }
 }
