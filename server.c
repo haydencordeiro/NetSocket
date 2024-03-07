@@ -54,45 +54,6 @@ char *intToBinaryString(int num)
     return bitString;
 }
 
-int create_socket()
-{
-    int server_socket;
-    if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
-    return server_socket;
-}
-
-void bind_socket(int server_socket)
-{
-    struct sockaddr_in server_address;
-    server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = INADDR_ANY;
-    server_address.sin_port = htons(PORT);
-    int opt = 1;
-    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0)
-    {
-        perror("Setsockopt failed");
-        exit(EXIT_FAILURE);
-    }
-    if (bind(server_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
-    {
-        perror("Bind failed");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void listen_for_clients(int server_socket)
-{
-    if (listen(server_socket, 3) < 0)
-    {
-        perror("Listen failed");
-        exit(EXIT_FAILURE);
-    }
-}
-
 int getFileSize(char *filePath)
 {
     int input_fd = open(filePath, O_RDONLY);
@@ -105,19 +66,6 @@ int getFileSize(char *filePath)
     // printf("%d this is \n",c);
     close(input_fd);
     return c;
-}
-
-int accept_client(int server_socket)
-{
-    int client_socket;
-    struct sockaddr_in client_address;
-    int addrlen = sizeof(client_address);
-    if ((client_socket = accept(server_socket, (struct sockaddr *)&client_address, (socklen_t *)&addrlen)) < 0)
-    {
-        perror("Accept failed");
-        exit(EXIT_FAILURE);
-    }
-    return client_socket;
 }
 
 void sendFile(int client_socket)
@@ -180,53 +128,119 @@ void dirList(int client_socket, char *option)
     }
 }
 
-char *searchFiles(){
+char *searchFiles()
+{
     char *temp = runPopen("find ~/ -name 'temp.txt'");
     // printf("%s\Message from client: Send File Pleasen", temp);
-    if(strlen(temp) == 0)
-    return "-1";
+    if (strlen(temp) == 0)
+        return "-1";
     char *token = strtok(temp, "\n");
     return strdup(token);
     // printf("%s here\n", token);
     // printf("%d\n", strlen(temp));
 }
 
-void getStatOfFile(int client_socket, char *filePath){
+void getStatOfFile(int client_socket, char *filePath)
+{
     char *command;
     asprintf(&command, "stat -c '%%n %%s %%w %%A' %s", filePath);
-    printf("%s here2",(command));
     sendString(client_socket, runPopen(command));
 }
-int main()
+
+void crequest(int new_socket)
 {
-    int server_socket = create_socket();
-    bind_socket(server_socket);
-    listen_for_clients(server_socket);
-
-    int client_socket = accept_client(server_socket);
-    printf("Client connected.\n");
-
-    // Client sends the first request
+    // Function to handle client requests
     char buffer[1024] = {0};
-    read(client_socket, buffer, 1024);
-    printf("Message from client: %s\n", buffer);
+    int valread;
 
-    // Server responds with message
+    while (1)
+    {
+        // Clear the buffer
+        memset(buffer, 0, sizeof(buffer));
 
-    // sendFile(client_socket);
-    // dirList(client_socket, 'c');
-    // char *temp = runPopen("find ~/ -name 'temp123.txt'");
-    getStatOfFile(client_socket,searchFiles());
-    close(client_socket);
-    close(server_socket);
-    return 0;
+        // Read the command sent by the client
+        valread = read(new_socket, buffer, sizeof(buffer));
+
+        if (strcmp(buffer, "quitc\n") == 0)
+        {
+            // If the client sends "quitc", exit the loop and close the connection
+            break;
+        }
+
+        getStatOfFile(new_socket, searchFiles());
+    }
 }
 
-//  stat --format="%n %W" ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'
+int main()
+{
+    int server_fd, new_socket, valread;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
 
-//  stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'
+    // Creating socket file descriptor
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
 
+    // Forcefully attaching socket to the port 8080
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+                   &opt, sizeof(opt)))
+    {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
 
-// find ~/ -name "temp123.txt"
+    // Forcefully attaching socket to the port 8080
+    if (bind(server_fd, (struct sockaddr *)&address,
+             sizeof(address)) < 0)
+    {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+    if (listen(server_fd, 3) < 0)
+    {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
 
-// stat -c '%n\n%s\n%w\n%A' /home/hayden/Desktop/assignment1/temp/temp.txt
+    while (1)
+    {
+        // Accept the incoming connection
+        if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
+                                 (socklen_t *)&addrlen)) < 0)
+        {
+            perror("accept");
+            exit(EXIT_FAILURE);
+        }
+
+        // Fork a child process to handle the client request
+        int pid = fork();
+
+        if (pid < 0)
+        {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        }
+        else if (pid == 0)
+        {
+            // Child process
+            // Close the listening socket in the child process
+            close(server_fd);
+            crequest(new_socket);
+            exit(0); // Exit the child process
+        }
+        else
+        {
+            // Parent process
+            // Close the new socket in the parent process
+            close(new_socket);
+        }
+    }
+    return 0;
+}
