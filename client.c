@@ -117,30 +117,38 @@ int main()
 {
     int client_socket = create_socket();
     connect_to_server(client_socket);
-
-    char buffer[1024] = {0};
-    char *command = "dirlist -a";
-    // char *command = "dirlist -t";
-    // char *command = "w24fn temp.txt";
-
-    // Send lenght of the command to be received
-    send(client_socket, add_zeros(strlen(command)), 32, 0);
-
-    // Send command to server
-    send(client_socket, command, strlen(command), 0);
-    if (strstr(command, "w24fn") != NULL)
+    char command[1024];
+    while (1)
     {
-        receiveDataHelper(client_socket);
-    }
-    else if (strstr(command, "dirlist -t") != NULL)
-    {
-        receiveDataHelper(client_socket);
-    }
-    else if (strstr(command, "dirlist -a") != NULL)
-    {
-        receiveDataHelper(client_socket);
-    }
+        // char buffer[1024] = {0};
+        // scanf("%[^\n]s", command);
+        fgets(command, 1024, stdin);
 
-    close(client_socket);
-    return 0;
+        printf("user entered %s\n", command);
+        // char *command = "dirlist -t";
+        // char *command = "w24fn temp.txt";
+
+        // Send lenght of the command to be received
+        send(client_socket, add_zeros(strlen(command)), 32, 0);
+
+        // Send command to server
+        send(client_socket, command, strlen(command), 0);
+        if (strstr(command, "w24fn") != NULL)
+        {
+            receiveDataHelper(client_socket);
+        }
+        else if (strstr(command, "dirlist -t") != NULL)
+        {
+            receiveDataHelper(client_socket);
+        }
+        else if (strstr(command, "dirlist -a") != NULL)
+        {
+            receiveDataHelper(client_socket);
+        }
+        else if (strstr(command, "quitc") != NULL)
+        {
+            close(client_socket);
+            return 0;
+        }
+    }
 }
