@@ -180,6 +180,22 @@ void dirList(int client_socket, char *option)
     }
 }
 
+char *searchFiles(){
+    char *temp = runPopen("find ~/ -name 'temp.txt'");
+    // printf("%s\Message from client: Send File Pleasen", temp);
+    if(strlen(temp) == 0)
+    return "-1";
+    char *token = strtok(temp, "\n");
+    return token;
+    // printf("%s here\n", token);
+    // printf("%d\n", strlen(temp));
+}
+
+void getStatOfFile(char *filePath){
+    char *command;
+    asprintf(&command, "stat -c '%%n %%s %%w %%A' /home/hayden/Desktop/assignment1/temp/temp.txt' %s", filePath);
+    printf("%s here2",runPopen(command));
+}
 int main()
 {
     int server_socket = create_socket();
@@ -197,7 +213,9 @@ int main()
     // Server responds with message
 
     // sendFile(client_socket);
-    dirList(client_socket, 'c');
+    // dirList(client_socket, 'c');
+    // char *temp = runPopen("find ~/ -name 'temp123.txt'");
+    getStatOfFile(searchFiles());
     close(client_socket);
     close(server_socket);
     return 0;
@@ -206,3 +224,8 @@ int main()
 //  stat --format="%n %W" ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'
 
 //  stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'
+
+
+// find ~/ -name "temp123.txt"
+
+// stat -c '%n\n%s\n%w\n%A' /home/hayden/Desktop/assignment1/temp/temp.txt
