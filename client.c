@@ -106,17 +106,44 @@ void receiveDataHelper(int client_socket)
     }
 }
 
+int getIntLength(int num)
+{
+    int length = 0;
+
+    // If the number is 0, its length is 1
+    if (num == 0)
+        return 1;
+
+    // Keep dividing the number by 10 until it becomes 0, and count the divisions
+    while (num != 0)
+    {
+        num = num / 10;
+        length++;
+    }
+
+    return length;
+}
+
 int main()
 {
     int client_socket = create_socket();
     connect_to_server(client_socket);
 
     char buffer[1024] = {0};
-    // Request Server for FileintToBinaryString
-    char *message = "Send File Please";
-    send(client_socket, message, strlen(message), 0);
+    // char *commnad = "dirlist -a";
+    // char *commnad = "dirlist -t";
+    char *command = "w24fn temp.txt";
 
-    receiveDataHelper(client_socket);
+    // Send lenght of the command to be received
+    send(client_socket, strlen(command), getIntLength(strlen(command)), 0);
+
+    // Send command to server
+    send(client_socket, command, strlen(command), 0);
+    if (strstr(command, "w24fn") != NULL)
+    {
+        receiveDataHelper(client_socket);
+    }
+
     // receiveFileHelper(client_socket);
     close(client_socket);
     return 0;

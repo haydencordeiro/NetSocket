@@ -158,16 +158,25 @@ void crequest(int new_socket)
         // Clear the buffer
         memset(buffer, 0, sizeof(buffer));
 
-        // Read the command sent by the client
-        valread = read(new_socket, buffer, sizeof(buffer));
+        // Read the lenght of the command that the clinet is going to send
+        read(new_socket, buffer, sizeof(buffer));
+        int sizeofCommand = atoi(buffer);
+        memset(buffer, 0, sizeof(buffer));
 
-        if (strcmp(buffer, "quitc\n") == 0)
+        // Get command from user
+        read(new_socket, buffer, sizeofCommand);
+        char *command = strdup(buffer);
+        memset(buffer, 0, sizeof(buffer));
+
+        if (strcmp(command, "quitc") == 0)
         {
             // If the client sends "quitc", exit the loop and close the connection
             break;
         }
-
-        getStatOfFile(new_socket, searchFiles());
+        else if (strstr(command, "w24fn") != NULL)
+        {
+            getStatOfFile(new_socket, searchFiles());
+        }
     }
 }
 
