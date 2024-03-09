@@ -6,6 +6,39 @@
 #include <unistd.h>
 #include <fcntl.h>
 #define PORT 8080
+void createTheTar(char * temp1){
+    // printf("%s\n",temp1);
+    char * temp;
+    
+    asprintf(&temp, "tar -czvf temp.tar.gz --transform='s|.*/||' %s", temp1);
+    printf("%s\n",temp);
+    system(temp);
+}
+
+char* resolve_paths(const char *paths) {
+    int length = strlen(paths);
+    char *resolved_paths = (char*)malloc(3 * length + 1); // Allocate memory for resolved paths
+    if (resolved_paths == NULL) {
+        printf("Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    int i = 0, j = 0;
+    while (i < length) {
+        if (paths[i] == ' ' || paths[i] == '(' || paths[i] == ')') {
+            resolved_paths[j++] = '\\'; // Escape space or parentheses with "\"
+            resolved_paths[j++] = paths[i++];
+        } else if (paths[i] == '\n') {
+            resolved_paths[j++] = ' '; // Replace newline with space
+            i++;
+        } else {
+            resolved_paths[j++] = paths[i++]; // Copy other characters as is
+        }
+    }
+    resolved_paths[j] = '\0'; // Null-terminate the resolved paths
+    
+    return resolved_paths;
+}
 
 char *runPopen(char *str)
 {
@@ -57,7 +90,7 @@ void sendFile(int client_socket)
     char buffer[1024] = {0};
 
     // Sending Start of file byte sequence
-    char *fileName = "./serverDir/1temp.pdf";
+    char *fileName = "./temp.tar.gz";
     // Calculating file size to send to client
     int fileSize = getFileSize(fileName);
     // Convert the file size to binary string
@@ -166,6 +199,7 @@ void crequest(int new_socket)
         read(new_socket, buffer, sizeofCommand);
         char *command = strdup(buffer);
         memset(buffer, 0, sizeof(buffer));
+        printf("user entered %s %s\n", command,strstr(command,"test"));
         // Run the appropriate functions based on the command
         if (strcmp(command, "quitc") == 0)
         {
@@ -198,6 +232,18 @@ void crequest(int new_socket)
             char *temp = runPopen(" stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
             sendString(new_socket, temp);
             free(temp);
+        }
+        // test
+        else if (strstr(command, "test") !=NULL)
+        {
+            char *temp = runPopen("find ~ -type f -size -10k  -name '*.pdf'");
+            printf("%s\n",temp);
+            createTheTar(resolve_paths(temp));
+            // sendString(new_socket, temp);
+            // free(temp);
+            printf("server\n");
+            sendFile(new_socket);
+
         }
     }
 }

@@ -42,7 +42,7 @@ void connect_to_server(int client_socket)
 void receiveFileHelper(int client_socket)
 {
     char buffer[1024] = {0};
-
+    printf("insdie\n");
     // Reading size of file
     read(client_socket, buffer, 32);
     // converting the binary string to int
@@ -50,7 +50,8 @@ void receiveFileHelper(int client_socket)
     printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
-    char *outputFilename = "./outputFilename.pdf";
+    unlink("./temp2.tar.gz");
+    char *outputFilename = "./temp2.tar.gz";
     int output_fd = open(outputFilename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (output_fd == -1)
     {
@@ -61,10 +62,11 @@ void receiveFileHelper(int client_socket)
     for (int i = 0; i < fileSize; i++)
     {
         read(client_socket, buffer, 1);
-        printf("Data: %s\n", buffer);
+        printf("Data: %s %d %d\n", buffer,i,fileSize);
         write(output_fd, buffer, 1);
         memset(buffer, 0, sizeof(buffer));
     }
+    printf("done\n");
     close(output_fd);
 }
 
@@ -132,6 +134,12 @@ int main()
         {
             close(client_socket);
             return 0;
+        }
+        else if (strstr(command, "test") !=NULL)
+        {
+            // receiveDataHelper(client_socket);
+            printf("client\n");
+            receiveFileHelper(client_socket);
         }
     }
 }
