@@ -201,7 +201,7 @@ void crequest(int new_socket)
         memset(buffer, 0, sizeof(buffer));
         printf("user entered %s %s\n", command,strstr(command,"test"));
         // Run the appropriate functions based on the command
-        if (strcmp(command, "quitc") == 0)
+        if (strcmp(command, "quitc\n") == 0)
         {
             // If the client sends "quitc", exit the loop and close the connection
             printf("Sever Died\n");
