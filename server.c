@@ -87,6 +87,7 @@ int getFileSize(char *filePath)
 
 void sendFile(int client_socket)
 {
+    sleep(2);
     char buffer[1024] = {0};
 
     // Sending Start of file byte sequence
@@ -107,12 +108,13 @@ void sendFile(int client_socket)
     // Sending the file size
     send(client_socket, fileSizeString, 32, 0);
     // Sending File Data
+    char *tempBuffer[1024] = {0};
     for (int i = 0; i < fileSize; i++)
     {
-        char *tempBuffer;
-        read(input_fd, tempBuffer, 1);
+        int br = read(input_fd, tempBuffer, 1);
         send(client_socket, tempBuffer, 1, 0);
     }
+    close(input_fd);
 }
 
 // Helper method to send a String from the client to server
@@ -237,7 +239,7 @@ void crequest(int new_socket)
         else if (strstr(command, "test") !=NULL)
         {
             char *temp = runPopen("find ~ -type f -size -10k  -name '*.pdf'");
-            printf("%s\n",temp);
+                        printf("%s\n",temp);
             createTheTar(resolve_paths(temp));
             // sendString(new_socket, temp);
             // free(temp);
