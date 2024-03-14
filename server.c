@@ -6,6 +6,42 @@
 #include <unistd.h>
 #include <fcntl.h>
 #define PORT 8080
+
+void tokenize_extensions(const char *str, char *a, char *b, char *c) {
+    // Tokenize the input string
+    char *token;
+    char *str_copy = strdup(str); // Create a copy for tokenization
+    token = strtok(str_copy, " ");
+
+    // Skip the first token
+    token = strtok(NULL, " ");
+
+    // Assign remaining tokens to variables a, b, c
+    if (token != NULL) {
+        strcpy(a, "*.");
+        strcat(a, token);
+        token = strtok(NULL, " ");
+    } else {
+        strcpy(a, "");
+    }
+
+    if (token != NULL) {
+        strcpy(b, "*.");
+        strcat(b, token);
+        token = strtok(NULL, " ");
+    } else {
+        strcpy(b, "");
+    }
+
+    if (token != NULL) {
+        strcpy(c, "*.");
+        strcat(c, token);
+    } else {
+        strcpy(c, "");
+    }
+
+    free(str_copy);
+}
 void createTheTar(char * temp1){
     // printf("%s\n",temp1);
     char * temp;
@@ -41,7 +77,8 @@ char* resolve_paths(const char *paths) {
 }
 
 char *runPopen(char *str)
-{
+{   
+    printf("RUN POPEN %s\n",str);
     FILE *fp;
     char buffer[1024];
     char *result = (char *)malloc(4096);
@@ -238,8 +275,23 @@ void crequest(int new_socket)
         // test
         else if (strstr(command, "test") !=NULL)
         {
-            char *temp = runPopen("find ~ -type f -size -10k  -name '*.pdf'");
-                        printf("%s\n",temp);
+            // char *temp;
+            // char *temp = runPopen("find ~ -type f -size -10k  -name '*.pdf'");
+            // printf("%s\n",temp);
+            
+            char *temp2;
+            // char *a="";
+            // char *b="*.c";
+            // char *c="";
+            char a[10], b[10], c[10];
+            tokenize_extensions(command, a, b, c);
+            printf("JIVIN\n");
+            printf("a: %s\n", a);
+            printf("b: %s\n", b);
+            printf("c: %s\n", c);
+            asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)",a,b,c);
+            printf("%s\n",temp2);
+            char *temp = runPopen(temp2);
             createTheTar(resolve_paths(temp));
             // sendString(new_socket, temp);
             // free(temp);
