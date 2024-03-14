@@ -43,7 +43,7 @@ char** split_string(const char* input) {
         }
 
         remove_special_chars(token); // Remove special characters if needed
-        strcpy(words[i], ".*"); // Add ".*" before the word
+        strcpy(words[i], "*."); // Add ".*" before the word
         strcat(words[i], token); // Concatenate the word itself
         token = strtok(NULL, " ");
         i++;
@@ -288,7 +288,13 @@ void crequest(int new_socket)
         memset(buffer, 0, sizeof(buffer));
 
         // Get command from the client
-        read(new_socket, buffer, sizeofCommand);
+        int n=read(new_socket, buffer, sizeofCommand);
+        printf("%d\n",n);
+        if (n==0)
+        {   
+            break;
+        }
+        
         char *command = strdup(buffer);
         memset(buffer, 0, sizeof(buffer));
         printf("user entered %s %s\n", command,strstr(command,"test"));
@@ -350,6 +356,7 @@ void crequest(int new_socket)
 
         }
     }
+    printf("client disconnected\n");
 }
 
 int main()
