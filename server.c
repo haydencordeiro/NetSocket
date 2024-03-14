@@ -18,6 +18,7 @@ void remove_special_chars(char *str) {
     str[j] = '\0'; // Null terminate the resulting string
 }
 
+
 char** split_string(const char* input) {
     char** words = malloc(4 * sizeof(char*));
     if (words == NULL) {
@@ -34,12 +35,16 @@ char** split_string(const char* input) {
     char* token = strtok(copy, " ");
     int i = 0;
     while (token != NULL && i < 4) {
-        words[i] = strdup(token);
-        remove_special_chars(words[i]);
+        // Allocate memory for the word with "*." prefix
+        words[i] = malloc(strlen(token) + 3); // 3 for "*." and null terminator
         if (words[i] == NULL) {
             printf("Memory allocation failed\n");
             exit(EXIT_FAILURE);
         }
+
+        remove_special_chars(token); // Remove special characters if needed
+        strcpy(words[i], ".*"); // Add ".*" before the word
+        strcat(words[i], token); // Concatenate the word itself
         token = strtok(NULL, " ");
         i++;
     }
@@ -54,6 +59,7 @@ char** split_string(const char* input) {
 
     return words;
 }
+
 void tokenize_extensions(const char *str, char *a, char *b, char *c) {
     // Tokenize the input string
     char *token;
