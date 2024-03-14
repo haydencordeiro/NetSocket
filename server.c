@@ -7,6 +7,41 @@
 #include <fcntl.h>
 #define PORT 8080
 
+char** split_string(const char* input) {
+    char** words = malloc(4 * sizeof(char*));
+    if (words == NULL) {
+        printf("Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char* copy = strdup(input);
+    if (copy == NULL) {
+        printf("Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char* token = strtok(copy, " ");
+    int i = 0;
+    while (token != NULL && i < 4) {
+        words[i] = strdup(token);
+        if (words[i] == NULL) {
+            printf("Memory allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+        token = strtok(NULL, " ");
+        i++;
+    }
+
+    // Fill remaining elements with NULL
+    while (i < 4) {
+        words[i] = NULL;
+        i++;
+    }
+
+    free(copy);
+
+    return words;
+}
 void tokenize_extensions(const char *str, char *a, char *b, char *c) {
     // Tokenize the input string
     char *token;
@@ -275,6 +310,15 @@ void crequest(int new_socket)
         // test
         else if (strstr(command, "test") !=NULL)
         {
+            char** words = split_string(command);
+                // Print the words
+            int i = 0;
+            while (words[i] != NULL) {
+                printf("%s\n", words[i]);
+                free(words[i]); // Free memory allocated for each word
+                i++;
+            }
+            
             // char *temp;
             // char *temp = runPopen("find ~ -type f -size -10k  -name '*.pdf'");
             // printf("%s\n",temp);
@@ -284,12 +328,13 @@ void crequest(int new_socket)
             // char *b="*.c";
             // char *c="";
             char a[10], b[10], c[10];
-            tokenize_extensions(command, a, b, c);
+            // tokenize_extensions(command, a, b, c);
             printf("JIVIN\n");
             printf("a: %s\n", a);
             printf("b: %s\n", b);
             printf("c: %s\n", c);
-            asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)",a,b,c);
+            asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
+            // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", a, b, c);
             printf("%s\n",temp2);
             char *temp = runPopen(temp2);
             createTheTar(resolve_paths(temp));
