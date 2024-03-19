@@ -7,50 +7,58 @@
 #include <fcntl.h>
 #define PORT 8080
 
-void remove_special_chars(char *str) {
+void remove_special_chars(char *str)
+{
     int i, j = 0;
-    for (i = 0; str[i] != '\0'; i++) {
+    for (i = 0; str[i] != '\0'; i++)
+    {
         // If the character is alphanumeric, keep it
-        if (isalnum((unsigned char)str[i])) {
+        if (isalnum((unsigned char)str[i]))
+        {
             str[j++] = str[i];
         }
     }
     str[j] = '\0'; // Null terminate the resulting string
 }
 
-
-char** split_string(const char* input) {
-    char** words = malloc(4 * sizeof(char*));
-    if (words == NULL) {
+char **split_string(const char *input)
+{
+    char **words = malloc(4 * sizeof(char *));
+    if (words == NULL)
+    {
         printf("Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
 
-    char* copy = strdup(input);
-    if (copy == NULL) {
+    char *copy = strdup(input);
+    if (copy == NULL)
+    {
         printf("Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
 
-    char* token = strtok(copy, " ");
+    char *token = strtok(copy, " ");
     int i = 0;
-    while (token != NULL && i < 4) {
+    while (token != NULL && i < 4)
+    {
         // Allocate memory for the word with "*." prefix
         words[i] = malloc(strlen(token) + 3); // 3 for "*." and null terminator
-        if (words[i] == NULL) {
+        if (words[i] == NULL)
+        {
             printf("Memory allocation failed\n");
             exit(EXIT_FAILURE);
         }
 
         remove_special_chars(token); // Remove special characters if needed
-        strcpy(words[i], "*."); // Add ".*" before the word
-        strcat(words[i], token); // Concatenate the word itself
+        strcpy(words[i], "*.");      // Add ".*" before the word
+        strcat(words[i], token);     // Concatenate the word itself
         token = strtok(NULL, " ");
         i++;
     }
 
     // Fill remaining elements with NULL
-    while (i < 4) {
+    while (i < 4)
+    {
         words[i] = "";
         i++;
     }
@@ -60,7 +68,8 @@ char** split_string(const char* input) {
     return words;
 }
 
-void tokenize_extensions(const char *str, char *a, char *b, char *c) {
+void tokenize_extensions(const char *str, char *a, char *b, char *c)
+{
     // Tokenize the input string
     char *token;
     char *str_copy = strdup(str); // Create a copy for tokenization
@@ -70,68 +79,86 @@ void tokenize_extensions(const char *str, char *a, char *b, char *c) {
     token = strtok(NULL, " ");
 
     // Assign remaining tokens to variables a, b, c
-    if (token != NULL) {
+    if (token != NULL)
+    {
         strcpy(a, "*.");
         strcat(a, token);
         token = strtok(NULL, " ");
-    } else {
+    }
+    else
+    {
         strcpy(a, "");
     }
 
-    if (token != NULL) {
+    if (token != NULL)
+    {
         strcpy(b, "*.");
         strcat(b, token);
         token = strtok(NULL, " ");
-    } else {
+    }
+    else
+    {
         strcpy(b, "");
     }
 
-    if (token != NULL) {
+    if (token != NULL)
+    {
         strcpy(c, "*.");
         strcat(c, token);
-    } else {
+    }
+    else
+    {
         strcpy(c, "");
     }
 
     free(str_copy);
 }
-void createTheTar(char * temp1){
+void createTheTar(char *temp1)
+{
     // printf("%s\n",temp1);
-    char * temp;
-    
+    char *temp;
+
     asprintf(&temp, "tar -czvf temp.tar.gz --transform='s|.*/||' %s", temp1);
-    printf("%s\n",temp);
+    printf("%s\n", temp);
     system(temp);
 }
 
-char* resolve_paths(const char *paths) {
+char *resolve_paths(const char *paths)
+{
     int length = strlen(paths);
-    char *resolved_paths = (char*)malloc(3 * length + 1); // Allocate memory for resolved paths
-    if (resolved_paths == NULL) {
+    char *resolved_paths = (char *)malloc(3 * length + 1); // Allocate memory for resolved paths
+    if (resolved_paths == NULL)
+    {
         printf("Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
-    
+
     int i = 0, j = 0;
-    while (i < length) {
-        if (paths[i] == ' ' || paths[i] == '(' || paths[i] == ')') {
+    while (i < length)
+    {
+        if (paths[i] == ' ' || paths[i] == '(' || paths[i] == ')')
+        {
             resolved_paths[j++] = '\\'; // Escape space or parentheses with "\"
             resolved_paths[j++] = paths[i++];
-        } else if (paths[i] == '\n') {
+        }
+        else if (paths[i] == '\n')
+        {
             resolved_paths[j++] = ' '; // Replace newline with space
             i++;
-        } else {
+        }
+        else
+        {
             resolved_paths[j++] = paths[i++]; // Copy other characters as is
         }
     }
     resolved_paths[j] = '\0'; // Null-terminate the resolved paths
-    
+
     return resolved_paths;
 }
 
 char *runPopen(char *str)
-{   
-    printf("RUN POPEN %s\n",str);
+{
+    printf("RUN POPEN %s\n", str);
     FILE *fp;
     char buffer[1024];
     char *result = (char *)malloc(4096);
@@ -251,9 +278,9 @@ char *searchFiles(char *fileName)
     char *command;
     asprintf(&command, "find ~/ -name %s", fileName);
     char *temp = runPopen(command);
-    printf("File Found DAta %s %s\n",command, temp);
+    printf("File Found DAta %s %s\n", command, temp);
     if (strlen(temp) == 0)
-        return "-1";
+        return strdup("-1");
     char *token = strtok(temp, "\n");
     return strdup(token);
 }
@@ -263,7 +290,7 @@ void getStatOfFile(int client_socket, char *filePath)
 {
     char *command;
     asprintf(&command, "stat -c '%%n %%s %%w %%A' %s", filePath);
-    printf("Running this command %s\n",command);
+    printf("Running this command %s\n", command);
     sendString(client_socket, runPopen(command));
 }
 
@@ -288,16 +315,16 @@ void crequest(int new_socket)
         memset(buffer, 0, sizeof(buffer));
 
         // Get command from the client
-        int n=read(new_socket, buffer, sizeofCommand);
-        printf("%d\n",n);
-        if (n==0)
-        {   
+        int n = read(new_socket, buffer, sizeofCommand);
+        printf("%d\n", n);
+        if (n == 0)
+        {
             break;
         }
-        
+
         char *command = strdup(buffer);
         memset(buffer, 0, sizeof(buffer));
-        printf("user entered %s %s\n", command,strstr(command,"test"));
+        printf("user entered %s %s\n", command, strstr(command, "test"));
         // Run the appropriate functions based on the command
         if (strcmp(command, "quitc\n") == 0)
         {
@@ -310,13 +337,18 @@ void crequest(int new_socket)
             // return details of the file if found
             char *fileName = strchr(command, ' ') + 1;
             char *filePath = searchFiles(fileName);
-            if (strcmp("-1", fileName) == 0)
+            char *command[strlen(filePath) + 2]; // Adjust the size according to your needs
+
+            // Construct the command with the filepath enclosed in double quotes
+            snprintf(command, sizeof(command), "\"%s\"", filePath);
+            printf("File Path %s", filePath);
+            if (strcmp("-1", filePath) == 0)
             {
                 sendString(new_socket, "Couldnt Find File");
             }
             else
             {
-                getStatOfFile(new_socket, filePath);
+                getStatOfFile(new_socket, command);
             }
         }
         else if (strstr(command, "dirlist -a") != NULL)
@@ -332,28 +364,27 @@ void crequest(int new_socket)
             free(temp);
         }
         // test
-        else if (strstr(command, "test") !=NULL)
+        else if (strstr(command, "test") != NULL)
         {
-            char** words = split_string(command);
-                // Print the words
+            char **words = split_string(command);
+            // Print the words
             int i = 0;
-            while (words[i] != NULL) {
+            while (words[i] != NULL)
+            {
                 printf("%s\n", words[i]);
                 i++;
             }
-            
-         
+
             char *temp2;
             asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
             // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", a, b, c);
-            printf("%s\n",temp2);
+            printf("%s\n", temp2);
             char *temp = runPopen(temp2);
             createTheTar(resolve_paths(temp));
             // sendString(new_socket, temp);
             // free(temp);
             printf("server\n");
             sendFile(new_socket);
-
         }
     }
     printf("client disconnected\n");
