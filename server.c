@@ -5,7 +5,17 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <ctype.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #define PORT 8080
+// Max Number of Spaces in runCommand
+#define MAX_CMD_LEN 1000
+// Max File Size of 
+#define MAX_OUTPUT_SIZE 100000
+
 
 void remove_special_chars(char *str)
 {
@@ -156,29 +166,129 @@ char *resolve_paths(const char *paths)
     return resolved_paths;
 }
 
-char *runPopen(char *str)
+// char *runPopenWithArray(char *str)
+// {
+//      int pipe_fd[2];
+//     pid_t pid;
+//     char buffer[1024];
+//     char *result = (char *)malloc(4096);
+//     if (pipe(pipe_fd) == -1) {
+//         perror("pipe");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     pid = fork();
+//     if (pid == -1) {
+//         perror("fork");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     if (pid == 0) { // Child process
+//         close(pipe_fd[0]); // Close unused read end
+//         dup2(pipe_fd[1], STDOUT_FILENO); // Redirect stdout to the pipe
+//         close(pipe_fd[1]); // Close write end of the pipe
+
+//         // Execute the command
+//         execl("/bin/sh", "sh", "-c", str, NULL);
+//         perror("execl");
+//         exit(EXIT_FAILURE);
+//     } else { // Parent process
+//         close(pipe_fd[1]); // Close unused write end
+//         int bytes_read;
+//         while ((bytes_read = read(pipe_fd[0], buffer, sizeof(buffer))) > 0) {
+//             strcat(result, buffer);
+//         }
+//         close(pipe_fd[0]); // Close read end of the pipe
+//     }
+//     return result;
+// }
+
+
+// New Function
+
+// Backup
+// char *runPopenWithArray(const char* command)
+// {
+//     // Duplicate the command
+//     char* commandDup = strdup(command);
+//     char* args[MAX_CMD_LEN];
+//     char* token;
+//     int i = 0;
+
+//     // Tokenize the input command based on space
+//     token = strtok((char*)commandDup, " ");
+//     while (token != NULL)
+//     {
+//         args[i++] = token;
+//         token = strtok(NULL, " ");
+//     }
+//     args[i] = NULL; // Set the last argument to NULL
+//     for(int i = 0; args[i] != NULL; i++){
+//         printf("Command Data %s\n", args[i]);
+//     }
+//     // Execute the command using execvp
+//     int p[2];
+//     if (pipe(p) < 0)
+//     {
+//         exit(0);
+//     }
+//     int child = fork();
+//     if (child > 0) {
+
+//         // parent
+//         waitpid(child, NULL, 0);
+//         char *result = (char *)malloc(MAX_OUTPUT_SIZE);
+
+//         // char inbuf[400]; 
+
+//         read(p[0],result, MAX_OUTPUT_SIZE);
+//         printf("%s", result);
+//         return result;
+//     }
+//     else {
+//         // child
+//         dup2(p[1], 1);
+//         if (execvp(args[0], args) == -1)
+//         {
+//             printf("Command '%s' not found\n", commandDup);
+//             return 0;
+//         }
+//     }
+// }
+
+
+char *runPopenWithArray(char* s)
 {
-    printf("RUN POPEN %s\n", str);
-    FILE *fp;
-    char buffer[1024];
-    char *result = (char *)malloc(4096);
-
-    fp = popen(str, "r");
-    if (fp == NULL)
+    char *args[] = {
+        "bash",
+        "-c",
+        s,
+        NULL
+    };
+    // Execute the command using execvp
+    int p[2];
+    if (pipe(p) < 0)
     {
-        printf("Failed to run command\n");
-        return 1;
+        exit(0);
     }
+    int child = fork();
+    if (child > 0) {
 
-    while (fgets(buffer, sizeof(buffer), fp) != NULL)
-    {
-        strcat(result, buffer);
+        // parent
+        waitpid(child, NULL, 0);
+        char *result = (char *)malloc(MAX_OUTPUT_SIZE);
+        read(p[0],result, MAX_OUTPUT_SIZE);
+        printf("%s", result);
+        return result;
     }
+    else {
+        // child
+        dup2(p[1], 1);
+        if (execvp(args[0], args) == -1)
+        {
 
-    pclose(fp);
-
-    char *temp = strdup(result);
-    result;
+        }
+    }
 }
 
 char *addZeros(int num)
@@ -251,33 +361,12 @@ void sendString(int client_socket, char *s)
     }
 }
 
-// Dir list command
-void dirList(int client_socket, char *option)
-{
-    if (option == 'a')
-    {
-        // Use the ls command
-        char *temp = runPopen("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
-        // Send the output to the client
-        sendString(client_socket, temp);
-        free(temp);
-    }
-    else
-    {
-        // Use the stat command
-        char *temp = runPopen(" stat --format='%%n %%W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
-        // Send the output to the client
-        sendString(client_socket, temp);
-        free(temp);
-    }
-}
-
 // Helper method to search for a given File
 char *searchFiles(char *fileName)
 {
     char *command;
     asprintf(&command, "find ~/ -name %s", fileName);
-    char *temp = runPopen(command);
+    char *temp = runPopenWithArray(command);
     printf("File Found DAta %s %s\n", command, temp);
     if (strlen(temp) == 0)
         return strdup("-1");
@@ -291,7 +380,7 @@ void getStatOfFile(int client_socket, char *filePath)
     char *command;
     asprintf(&command, "stat -c '%%n %%s %%w %%A' %s", filePath);
     printf("Running this command %s\n", command);
-    sendString(client_socket, runPopen(command));
+    sendString(client_socket, runPopenWithArray(command));
 }
 
 void printData(char *s)
@@ -300,6 +389,7 @@ void printData(char *s)
 }
 void crequest(int new_socket)
 {
+    printf("New Client Connected");
     // Function to handle client requests
     char buffer[1024] = {0};
     int valread;
@@ -353,13 +443,14 @@ void crequest(int new_socket)
         }
         else if (strstr(command, "dirlist -a") != NULL)
         {
-            char *temp = runPopen("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
+            char *temp = runPopenWithArray("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
             sendString(new_socket, temp);
             free(temp);
         }
         else if (strstr(command, "dirlist -t") != NULL)
         {
-            char *temp = runPopen(" stat --format='%n %W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
+            
+            char *temp = runPopenWithArray("stat --format='%n-%W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
             sendString(new_socket, temp);
             free(temp);
         }
@@ -374,12 +465,11 @@ void crequest(int new_socket)
                 printf("%s\n", words[i]);
                 i++;
             }
-
             char *temp2;
             asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
             // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", a, b, c);
             printf("%s\n", temp2);
-            char *temp = runPopen(temp2);
+            char *temp = runPopenWithArray(temp2);
             createTheTar(resolve_paths(temp));
             // sendString(new_socket, temp);
             // free(temp);
