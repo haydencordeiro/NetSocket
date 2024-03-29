@@ -335,13 +335,17 @@ char* runPopenWithArray(char* s)
         // parent
         waitpid(child, NULL, 0);
         char* result = (char*)malloc(MAX_OUTPUT_SIZE);
+        printf("Reading Data\n");
         read(p[0], result, MAX_OUTPUT_SIZE);
+        printf("Done Reading\n");
         printf("%s", result);
+        result++;
         return result;
     }
     else {
         // child
         dup2(p[1], 1);
+        write(p[1], "#", 1);
         if (execvp(args[0], args) == -1)
         {
 
@@ -414,7 +418,6 @@ void sendString(int client_socket, char* s)
     // Send data one byte at a time
     for (int i = 0; i < lenght; i++)
     {
-        char* tempBuffer = s[i];
         send(client_socket, &s[i], 1, 0);
     }
 }
@@ -489,10 +492,11 @@ void crequest(int new_socket)
             // return details of the file if found
             char* fileName = strchr(command, ' ') + 1;
             char* filePath = searchFiles(fileName);
-            char* command[strlen(filePath) + 2]; // Adjust the size according to your needs
+            char* command; // Adjust the size according to your needs
 
             // Construct the command with the filepath enclosed in double quotes
-            snprintf(command, sizeof(command), "\"%s\"", filePath);
+            asprintf(&command, "\"%s\"", filePath);
+
             printf("File Path %s", filePath);
             if (strcmp("-1", filePath) == 0)
             {
