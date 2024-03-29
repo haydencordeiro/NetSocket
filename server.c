@@ -436,9 +436,9 @@ char* searchFiles(char* fileName)
 void getStatOfFile(int client_socket, char* filePath)
 {
     char* command;
-    asprintf(&command, "stat -c '%%n:::%%s:::%%w:::%%A' %s", filePath);
+    asprintf(&command, "stat -c '%%n\n%%s\n%%w\n%%A' %s", filePath);
     printf("Running this command %s\n", command);
-    char** result = splitString(runPopenWithArray(command), ":::");
+    char** result = splitString(runPopenWithArray(command), "\n");
     char* output;
     asprintf(&output, "FilePath: %s\nFile Size(Bytes): %s\nBirth Time: %s\nAccess Rights: %s\n", result[0], result[1], result[2], result[3]);
 
