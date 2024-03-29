@@ -15,9 +15,30 @@
 #define MAX_CMD_LEN 1000
 // Max File Size of 
 #define MAX_OUTPUT_SIZE 100000
+// Used in split string function
+#define MAX_NO_ARGUMENTS 400
 
 
-void remove_special_chars(char *str)
+
+// Helper method to remove spaces from a string
+char* stripSpaces(char* word)
+{
+    // Skip leading spaces
+    while (isspace(*word))
+        word++;
+    if (*word == '\0') // If the string is empty or contains only spaces
+        return word;
+    // Trim trailing spaces
+    char* end = word + strlen(word) - 1;
+    while (end > word && isspace(*end))
+        end--;
+    // Null-terminate the trimmed string
+    *(end + 1) = '\0';
+    return word;
+}
+
+
+void remove_special_chars(char* str)
 {
     int i, j = 0;
     for (i = 0; str[i] != '\0'; i++)
@@ -31,23 +52,60 @@ void remove_special_chars(char *str)
     str[j] = '\0'; // Null terminate the resulting string
 }
 
-char **split_string(const char *input)
+// Helper method to split a given string by the specified delimeter
+// eg: ("ls -1", " ") -> ["ls","-1"]
+char** splitString(char* str, char* delimenter)
 {
-    char **words = malloc(4 * sizeof(char *));
+    int count = 0;
+    char** tokens = (char**)malloc(MAX_NO_ARGUMENTS * sizeof(char*));
+    if (tokens == NULL)
+    {
+        printf("Memory allocation error\n");
+        return NULL;
+    }
+
+    // tokenize the string
+    char* token = strtok(str, delimenter);
+    while (token != NULL)
+    {
+        // allocate memory
+        tokens[count] = (char*)malloc((strlen(token) + 1) * sizeof(char));
+        if (tokens[count] == NULL)
+        {
+            fprintf(stderr, "Memory allocation error\n");
+            for (int i = 0; i < count; i++)
+                free(tokens[i]);
+            free(tokens);
+            return NULL;
+        }
+        // remove any extra spaces
+        strcpy(tokens[count], stripSpaces(token));
+        count++;
+        token = strtok(NULL, delimenter);
+    }
+    // add NULL to indicate end
+    tokens[count] = NULL;
+    return tokens;
+}
+
+
+char** split_string(const char* input)
+{
+    char** words = malloc(4 * sizeof(char*));
     if (words == NULL)
     {
         printf("Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
 
-    char *copy = strdup(input);
+    char* copy = strdup(input);
     if (copy == NULL)
     {
         printf("Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
 
-    char *token = strtok(copy, " ");
+    char* token = strtok(copy, " ");
     int i = 0;
     while (token != NULL && i < 4)
     {
@@ -78,11 +136,11 @@ char **split_string(const char *input)
     return words;
 }
 
-void tokenize_extensions(const char *str, char *a, char *b, char *c)
+void tokenize_extensions(const char* str, char* a, char* b, char* c)
 {
     // Tokenize the input string
-    char *token;
-    char *str_copy = strdup(str); // Create a copy for tokenization
+    char* token;
+    char* str_copy = strdup(str); // Create a copy for tokenization
     token = strtok(str_copy, " ");
 
     // Skip the first token
@@ -123,20 +181,20 @@ void tokenize_extensions(const char *str, char *a, char *b, char *c)
 
     free(str_copy);
 }
-void createTheTar(char *temp1)
+void createTheTar(char* temp1)
 {
     // printf("%s\n",temp1);
-    char *temp;
+    char* temp;
 
     asprintf(&temp, "tar -czvf temp.tar.gz --transform='s|.*/||' %s", temp1);
     printf("%s\n", temp);
     system(temp);
 }
 
-char *resolve_paths(const char *paths)
+char* resolve_paths(const char* paths)
 {
     int length = strlen(paths);
-    char *resolved_paths = (char *)malloc(3 * length + 1); // Allocate memory for resolved paths
+    char* resolved_paths = (char*)malloc(3 * length + 1); // Allocate memory for resolved paths
     if (resolved_paths == NULL)
     {
         printf("Memory allocation failed\n");
@@ -257,9 +315,9 @@ char *resolve_paths(const char *paths)
 // }
 
 
-char *runPopenWithArray(char* s)
+char* runPopenWithArray(char* s)
 {
-    char *args[] = {
+    char* args[] = {
         "bash",
         "-c",
         s,
@@ -276,8 +334,8 @@ char *runPopenWithArray(char* s)
 
         // parent
         waitpid(child, NULL, 0);
-        char *result = (char *)malloc(MAX_OUTPUT_SIZE);
-        read(p[0],result, MAX_OUTPUT_SIZE);
+        char* result = (char*)malloc(MAX_OUTPUT_SIZE);
+        read(p[0], result, MAX_OUTPUT_SIZE);
         printf("%s", result);
         return result;
     }
@@ -291,14 +349,14 @@ char *runPopenWithArray(char* s)
     }
 }
 
-char *addZeros(int num)
+char* addZeros(int num)
 {
-    char *num_str = (char *)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
+    char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
     sprintf(num_str, "%032d", num);                    // Format the integer with leading zeros
     return num_str;
 }
 
-int getFileSize(char *filePath)
+int getFileSize(char* filePath)
 {
     int input_fd = open(filePath, O_RDONLY);
     if (input_fd == -1)
@@ -315,14 +373,14 @@ int getFileSize(char *filePath)
 void sendFile(int client_socket)
 {
     sleep(2);
-    char buffer[1024] = {0};
+    char buffer[1024] = { 0 };
 
     // Sending Start of file byte sequence
-    char *fileName = "./temp.tar.gz";
+    char* fileName = "./temp.tar.gz";
     // Calculating file size to send to client
     int fileSize = getFileSize(fileName);
     // Convert the file size to binary string
-    char *fileSizeString = addZeros(fileSize);
+    char* fileSizeString = addZeros(fileSize);
     // Logging size and binary
     printf("%d File size %s", fileSize, fileSizeString);
     // opening the file to read
@@ -335,7 +393,7 @@ void sendFile(int client_socket)
     // Sending the file size
     send(client_socket, fileSizeString, 32, 0);
     // Sending File Data
-    char *tempBuffer[1024] = {0};
+    char* tempBuffer[1024] = { 0 };
     for (int i = 0; i < fileSize; i++)
     {
         int br = read(input_fd, tempBuffer, 1);
@@ -345,45 +403,49 @@ void sendFile(int client_socket)
 }
 
 // Helper method to send a String from the client to server
-void sendString(int client_socket, char *s)
+void sendString(int client_socket, char* s)
 {
     int lenght = strlen(s);
     printf("Lenght of s %d\n", lenght);
     // Conver the lenght to a string of lenght 8 to send to the client
-    char *lenghtString = addZeros(lenght);
+    char* lenghtString = addZeros(lenght);
     // Send Length
     send(client_socket, lenghtString, 32, 0);
     // Send data one byte at a time
     for (int i = 0; i < lenght; i++)
     {
-        char *tempBuffer = s[i];
+        char* tempBuffer = s[i];
         send(client_socket, &s[i], 1, 0);
     }
 }
 
 // Helper method to search for a given File
-char *searchFiles(char *fileName)
+char* searchFiles(char* fileName)
 {
-    char *command;
+    char* command;
     asprintf(&command, "find ~/ -name %s", fileName);
-    char *temp = runPopenWithArray(command);
+    char* temp = runPopenWithArray(command);
     printf("File Found DAta %s %s\n", command, temp);
     if (strlen(temp) == 0)
         return strdup("-1");
-    char *token = strtok(temp, "\n");
+    char* token = strtok(temp, "\n");
     return strdup(token);
 }
 
 // use the stat command to return details of the file
-void getStatOfFile(int client_socket, char *filePath)
+void getStatOfFile(int client_socket, char* filePath)
 {
-    char *command;
-    asprintf(&command, "stat -c '%%n %%s %%w %%A' %s", filePath);
+    char* command;
+    asprintf(&command, "stat -c '%%n:::%%s:::%%w:::%%A' %s", filePath);
     printf("Running this command %s\n", command);
-    sendString(client_socket, runPopenWithArray(command));
+    char** result = splitString(runPopenWithArray(command), ":::");
+    char* output;
+    asprintf(&output, "FilePath: %s\nFile Size(Bytes): %s\nBirth Time: %s\nAccess Rights: %s\n", result[0], result[1], result[2], result[3]);
+
+    sendString(client_socket, output);
 }
 
-void printData(char *s)
+void printData(char* s)
 {
     printf("Inside pd with value %s\n", s);
 }
@@ -391,7 +453,7 @@ void crequest(int new_socket)
 {
     printf("New Client Connected");
     // Function to handle client requests
-    char buffer[1024] = {0};
+    char buffer[1024] = { 0 };
     int valread;
 
     while (1)
@@ -412,7 +474,7 @@ void crequest(int new_socket)
             break;
         }
 
-        char *command = strdup(buffer);
+        char* command = strdup(buffer);
         memset(buffer, 0, sizeof(buffer));
         printf("user entered %s %s\n", command, strstr(command, "test"));
         // Run the appropriate functions based on the command
@@ -425,9 +487,9 @@ void crequest(int new_socket)
         else if (strstr(command, "w24fn") != NULL)
         {
             // return details of the file if found
-            char *fileName = strchr(command, ' ') + 1;
-            char *filePath = searchFiles(fileName);
-            char *command[strlen(filePath) + 2]; // Adjust the size according to your needs
+            char* fileName = strchr(command, ' ') + 1;
+            char* filePath = searchFiles(fileName);
+            char* command[strlen(filePath) + 2]; // Adjust the size according to your needs
 
             // Construct the command with the filepath enclosed in double quotes
             snprintf(command, sizeof(command), "\"%s\"", filePath);
@@ -443,21 +505,22 @@ void crequest(int new_socket)
         }
         else if (strstr(command, "dirlist -a") != NULL)
         {
-            char *temp = runPopenWithArray("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
+            char* temp = runPopenWithArray("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
             sendString(new_socket, temp);
             free(temp);
         }
         else if (strstr(command, "dirlist -t") != NULL)
         {
-            
-            char *temp = runPopenWithArray("stat --format='%n-%W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
+
+            char* temp = runPopenWithArray("stat --format='%n-%W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
             sendString(new_socket, temp);
             free(temp);
         }
         // test
         else if (strstr(command, "test") != NULL)
         {
-            char **words = split_string(command);
+            // Try using this splitString function
+            char** words = split_string(command);
             // Print the words
             int i = 0;
             while (words[i] != NULL)
@@ -465,11 +528,11 @@ void crequest(int new_socket)
                 printf("%s\n", words[i]);
                 i++;
             }
-            char *temp2;
+            char* temp2;
             asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
             // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", a, b, c);
             printf("%s\n", temp2);
-            char *temp = runPopenWithArray(temp2);
+            char* temp = runPopenWithArray(temp2);
             createTheTar(resolve_paths(temp));
             // sendString(new_socket, temp);
             // free(temp);
@@ -496,7 +559,7 @@ int main()
 
     // Forcefully attaching socket to the port 8080
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                   &opt, sizeof(opt)))
+        &opt, sizeof(opt)))
     {
         perror("setsockopt");
         exit(EXIT_FAILURE);
@@ -506,8 +569,8 @@ int main()
     address.sin_port = htons(PORT);
 
     // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr *)&address,
-             sizeof(address)) < 0)
+    if (bind(server_fd, (struct sockaddr*)&address,
+        sizeof(address)) < 0)
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
@@ -521,8 +584,8 @@ int main()
     while (1)
     {
         // Accept the incoming connection
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                                 (socklen_t *)&addrlen)) < 0)
+        if ((new_socket = accept(server_fd, (struct sockaddr*)&address,
+            (socklen_t*)&addrlen)) < 0)
         {
             perror("accept");
             exit(EXIT_FAILURE);
