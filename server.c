@@ -550,17 +550,23 @@ void crequest(int new_socket)
 int main()
 {
     int server_fd, new_socket, valread;
+    // Socket Address Object(Struct)
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
 
     // Creating socket file descriptor
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    // Aruments(Address Family [AF_INET/AP_UNIX] , TCP/UDP [SOCK_STREAM/ SOCK_DGRAM], 0 -> Default protocol of next layer)
+    // Create Raw TCP Socket
+    // Changed from == to 0 to < 0
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
 
+
+    // SKI{}
     // Forcefully attaching socket to the port 8080
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
         &opt, sizeof(opt)))
@@ -568,17 +574,28 @@ int main()
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
+
+    // Before using bind we need to make changes to socket address object
+    // Setting Socket Family
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
+    // Setting the ip address
+    // INADDR_ANY -> Gives me the current IP address of the system
+    // Convert Host Byte order to Network Byte order 
+    // Host to network long
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    // Setting the port Number
+    // Host to network Short (because 16 bits)
     address.sin_port = htons(PORT);
 
-    // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr*)&address,
-        sizeof(address)) < 0)
+    //  Bind
+    // ARGS (listening socket fd, server address object, sizeof the address object)
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0)
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
+    // The server is now ready to listen to client connection
+    // ARGS (listening socket description, queue lenght)
     if (listen(server_fd, 3) < 0)
     {
         perror("listen");
@@ -588,6 +605,8 @@ int main()
     while (1)
     {
         // Accept the incoming connection
+        // ARGS (listening socket FD,)
+        // Need to debug this
         if ((new_socket = accept(server_fd, (struct sockaddr*)&address,
             (socklen_t*)&addrlen)) < 0)
         {

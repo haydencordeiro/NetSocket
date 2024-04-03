@@ -1,0 +1,10 @@
+Server
+socket 
+bind
+listen
+accept
+
+
+Client
+socket
+connect

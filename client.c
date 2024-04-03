@@ -13,6 +13,7 @@
 
 int create_socket()
 {
+    // Create socket (Same family and socket type as server)
     int client_socket;
     if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -24,14 +25,18 @@ int create_socket()
 
 void connect_to_server(int client_socket)
 {
+    // Address object
     struct sockaddr_in server_address;
+    // Update server IP in address object
     if (inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr) <= 0)
     {
         perror("Invalid address/ Address not supported");
         exit(EXIT_FAILURE);
     }
+    // setting address family and port
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(PORT);
+    // ARGS (Socket descriptor, address object, size of the address object)
     if (connect(client_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
     {
         perror("Connection failed");
