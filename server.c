@@ -509,7 +509,7 @@ void crequest(int new_socket)
         }
         else if (strstr(command, "dirlist -a") != NULL)
         {
-            char* temp = runPopenWithArray("ls -l ~/ | grep '^d' | awk '{print $NF}' |sort");
+            char* temp = runPopenWithArray("find ~/ -type d -not -path '*/.*' | sort");
             sendString(new_socket, temp);
             free(temp);
         }
