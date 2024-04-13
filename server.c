@@ -646,6 +646,7 @@ int main()
             exit(EXIT_FAILURE);
         }
 
+        // START ONLY IN SERVER CODE
         char buffer[2] = { 0 };
         read(new_socket, buffer, 1);
         printf("Server Received %s\n", buffer);
@@ -653,6 +654,8 @@ int main()
             printf("Inside this loop");
             sendString(new_socket, whichServerToConnect());
         }
+        // END ONLY IN SERVER CODE
+        
         // Fork a child process to handle the client request
         int pid = fork();
 
