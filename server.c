@@ -21,7 +21,7 @@ int numberOfClients = 0;
 // Update Log
 void updateLog(){
     char* temp;
-    asprintf(&temp, "echo %d > server1.txt", numberOfClients);
+    asprintf(&temp, "echo %d > server.txt", numberOfClients);
     system(temp);
 }
 
@@ -45,7 +45,7 @@ char* whichServerToConnect() {
     }
     else {
         // Round-robin assignment after the first 9 clients
-        int remainingClients = totalNumberOfClients - 9;
+        int remainingClients = totalNumberOfClients - 10;
         serverNumber = 8080 + (remainingClients % 3);
     }
 
