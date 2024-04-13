@@ -463,14 +463,14 @@ void crequest(int new_socket)
         }
         else if (strcmp(command, "dirlist -a\n") == 0)
         {
-            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | sort | xargs -0 -I{} basename {}");
+            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} basename {} | sort");
             sendString(new_socket, temp);
             free(temp);
         }
         else if (strcmp(command, "dirlist -t\n") == 0)
         {
 
-            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} stat --format='%W*{}' {} | sort -t '*' -k 1 -r | awk -F '*' '{print $2}' | xargs -I{} basename {}");
+            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} stat --format='%W*{}' {} | sort -t '*' -k 1 | awk -F '*' '{print $2}' | xargs -I{} basename {}");
             sendString(new_socket, temp);
             free(temp);
         }
