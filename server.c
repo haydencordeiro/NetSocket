@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define PORT 8080
+#define PORT 8081
 // Max Number of Spaces in runCommand
 #define MAX_CMD_LEN 1000
 // Max File Size of 
@@ -35,7 +35,7 @@ char* whichServerToConnect() {
     system(temp);
     // Assign server based on the current number of clients
     if (totalNumberOfClients <= 3) {
-        serverNumber = 8080;
+        serverNumber = 8081;
     }
     else if (totalNumberOfClients <= 6) {
         serverNumber = 8081;
@@ -46,7 +46,7 @@ char* whichServerToConnect() {
     else {
         // Round-robin assignment after the first 9 clients
         int remainingClients = totalNumberOfClients - 10;
-        serverNumber = 8080 + (remainingClients % 3);
+        serverNumber = 8081 + (remainingClients % 3);
     }
 
     // Convert server number to string and return
@@ -524,7 +524,7 @@ int main()
 
 
     // SKI{}
-    // Forcefully attaching socket to the port 8080
+    // Forcefully attaching socket to the port 8081
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
         &opt, sizeof(opt)))
     {
