@@ -14,7 +14,7 @@
 // Max Number of Spaces in runCommand
 #define MAX_CMD_LEN 1000
 // Max File Size of 
-#define MAX_OUTPUT_SIZE 100000
+#define MAX_OUTPUT_SIZE 10000000
 // Used in split string function
 #define MAX_NO_ARGUMENTS 400
 
@@ -548,7 +548,7 @@ void crequest(int new_socket)
         else if (strstr(command, "dirlist -t") != NULL)
         {
 
-            char* temp = runPopenWithArray("find ~/ -type d -not -path '*/.*' -exec stat --format='%W-{}' {} \\; | sort -t '-' -k 1 -r | awk -F '-' '{print $2}'");
+            char* temp = runPopenWithArray("find ~/ -type d -not -path '*/.*' -exec stat --format='%W*{}' {} \\; | sort -t '*' -k 1 -r | awk -F '*' '{print $2}'");
             sendString(new_socket, temp);
             free(temp);
         }
