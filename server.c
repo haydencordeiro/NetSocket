@@ -299,7 +299,7 @@ char* commandHelper(char* s) {
         close(p[0]); // Close the read end of the pipe in the parent
         // Ensure null-termination
         result[total_read] = '\0';
-        return result;
+        return strdup(result);
     }
 }
 
@@ -478,15 +478,30 @@ void crequest(int new_socket)
             // Print the words
             int i = 0;
             while (words[i] != NULL)
-            {
+            {   
                 printf("%s\n", words[i]);
                 i++;
             }
             char* temp2;
-            asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
+            // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
+            // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
+            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
+            // asprintf(&temp2, "find ~/ -type f -name '%s' -o -name '%s' -o -name '%s' -not -path '*/.*'", words[1], words[2], words[3]);
             // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", a, b, c);
             printf("%s\n", temp2);
             char* temp = commandHelper(temp2);
+            printf("hello\n");
+            printf("%d \n",strlen(temp));
+            // if no files found send no as a message to client
+            if (strlen(temp)==0)
+            {
+               sendString(new_socket, "no");
+               continue;
+            }
+            // if files available send yes a as message to client
+            sendString(new_socket, "yes");
+            // printf
+            
             createTheTar(resolve_paths(temp));
             // sendString(new_socket, temp);
             // free(temp);
