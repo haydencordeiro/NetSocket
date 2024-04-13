@@ -459,14 +459,14 @@ void crequest(int new_socket)
         }
         else if (strstr(command, "dirlist -a") != NULL)
         {
-            char* temp = commandHelper("find ~/ -type d -not -path '*/.*' | sort");
+            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | sort | xargs -0 -I{} basename {}");
             sendString(new_socket, temp);
             free(temp);
         }
         else if (strstr(command, "dirlist -t") != NULL)
         {
 
-            char* temp = commandHelper("find ~/ -type d -not -path '*/.*' -exec stat --format='%W*{}' {} \\; | sort -t '*' -k 1 -r | awk -F '*' '{print $2}'");
+            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} stat --format='%W*{}' {} | sort -t '*' -k 1 -r | awk -F '*' '{print $2}' | xargs -I{} basename {}");
             sendString(new_socket, temp);
             free(temp);
         }
