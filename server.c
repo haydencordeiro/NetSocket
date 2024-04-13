@@ -23,7 +23,10 @@ int numberOfClients = 0;
 char* whichServerToConnect() {
     numberOfClients += 1;
     int serverNumber;
-
+    char* temp;
+    asprintf(&temp, "echo %d > count.txt", numberOfClients);
+    printf("command runnng %s",temp);
+    system(temp);
     // Assign server based on the current number of clients
     if (numberOfClients <= 3) {
         serverNumber = 8080;
