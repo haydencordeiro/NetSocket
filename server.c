@@ -17,29 +17,35 @@
 #define MAX_OUTPUT_SIZE 10000000
 // Used in split string function
 #define MAX_NO_ARGUMENTS 400
+int numberOfClients = 0;
+// Update Log
+void updateLog(){
+    char* temp;
+    asprintf(&temp, "echo %d > server1.txt", numberOfClients);
+    system(temp);
+}
 
 // ONLY IN SERVER CODE
-int numberOfClients = 0;
+int totalNumberOfClients = 0;
 char* whichServerToConnect() {
-    numberOfClients += 1;
+    totalNumberOfClients += 1;
     int serverNumber;
     char* temp;
-    asprintf(&temp, "echo %d > count.txt", numberOfClients);
-    printf("command runnng %s",temp);
+    asprintf(&temp, "echo %d > count.txt", totalNumberOfClients);
     system(temp);
     // Assign server based on the current number of clients
-    if (numberOfClients <= 3) {
+    if (totalNumberOfClients <= 3) {
         serverNumber = 8080;
     }
-    else if (numberOfClients <= 6) {
+    else if (totalNumberOfClients <= 6) {
         serverNumber = 8081;
     }
-    else if (numberOfClients <= 9) {
+    else if (totalNumberOfClients <= 9) {
         serverNumber = 8082;
     }
     else {
         // Round-robin assignment after the first 9 clients
-        int remainingClients = numberOfClients - 9;
+        int remainingClients = totalNumberOfClients - 9;
         serverNumber = 8080 + (remainingClients % 3);
     }
 
@@ -488,11 +494,18 @@ void crequest(int new_socket)
             sendFile(new_socket);
         }
     }
+    kill(getppid(), SIGFPE);
     printf("client disconnected\n");
 }
+void sigChildHandler(){
+    numberOfClients -= 1;
+    updateLog();
+}
+    
 
 int main()
 {
+    signal(SIGFPE, sigChildHandler);
     int server_fd, new_socket, valread;
     // Socket Address Object(Struct)
     struct sockaddr_in address;
@@ -563,11 +576,13 @@ int main()
         read(new_socket, buffer, 1);
         printf("Server Received %s\n", buffer);
         if (strstr(buffer, "0") != NULL) {
-            printf("Inside this loop");
             sendString(new_socket, whichServerToConnect());
+            continue;
         }
         // END ONLY IN SERVER CODE
 
+        numberOfClients += 1;
+        updateLog();
         // Fork a child process to handle the client request
         int pid = fork();
 
