@@ -23,7 +23,7 @@ int create_socket()
     return client_socket;
 }
 
-void connect_to_server(int client_socket)
+void connect_to_server(int client_socket,int portNumber)
 {
     // Address object
     struct sockaddr_in server_address;
@@ -35,7 +35,7 @@ void connect_to_server(int client_socket)
     }
     // setting address family and port
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(PORT);
+    server_address.sin_port = htons(portNumber);
     // ARGS (Socket descriptor, address object, size of the address object)
     if (connect(client_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
     {
@@ -75,7 +75,7 @@ void receiveFileHelper(int client_socket)
     close(output_fd);
 }
 
-void receiveDataHelper(int client_socket)
+char * receiveDataHelper(int client_socket)
 {
     char buffer[1024] = {0};
 
@@ -86,14 +86,23 @@ void receiveDataHelper(int client_socket)
     // printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
-
+    
     // Writing the file data
+    char file_data[fileSize +1]; 
+
+    // 
     for (int i = 0; i < fileSize; i++)
     {
         read(client_socket, buffer, 1);
-        printf("%s", buffer);
+        // printf("%s", buffer);
+        file_data[i] = buffer[0];
         memset(buffer, 0, sizeof(buffer));
+
     }
+    file_data[fileSize] = '\0';
+    // printf("%s\n", file_data);
+    return strdup(file_data);
+
 }
 
 char *addZeros(int num)
@@ -106,7 +115,13 @@ char *addZeros(int num)
 int main()
 {
     int client_socket = create_socket();
-    connect_to_server(client_socket);
+    connect_to_server(client_socket,PORT);
+    int newPort = atoi(receiveDataHelper(client_socket));
+    close(client_socket);
+
+    client_socket = create_socket();
+    connect_to_server(client_socket,newPort);
+
     char command[1024];
     while (1)
     {
