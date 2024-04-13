@@ -156,13 +156,12 @@ int main()
             close(client_socket);
             return 0;
         }
-        else if (strstr(command, "test") !=NULL)
+        else if (strstr(command, "hayden") !=NULL)
         {
             
             printf("client\n");
             if (strcmp(receiveDataHelper(client_socket),"no")==0)
             {
-                // strcmp(receiveDataHelper(client_socket),"00");
                 printf("No file Found\n");
                 continue;
             }

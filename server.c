@@ -19,7 +19,7 @@
 #define MAX_NO_ARGUMENTS 400
 int numberOfClients = 0;
 // Update Log
-void updateLog(){
+void updateLog() {
     char* temp;
     asprintf(&temp, "echo %d > server.txt", numberOfClients);
     system(temp);
@@ -402,9 +402,14 @@ void printData(char* s)
 {
     printf("Inside pd with value %s\n", s);
 }
+
+int checkCondition(char * command, char * subString){
+    char* temp = strdup(command);
+    return strstr(temp, subString)!= NULL;
+}
 void crequest(int new_socket)
 {
-    printf("New Client Connected");
+    printf("New Client Connected \n");
     // Function to handle client requests
     char buffer[1024] = { 0 };
     int valread;
@@ -421,15 +426,14 @@ void crequest(int new_socket)
 
         // Get command from the client
         int n = read(new_socket, buffer, sizeofCommand);
-        printf("%d\n", n);
         if (n == 0)
         {
             break;
         }
 
         char* command = strdup(buffer);
+        printf("Client send this command %s \n", command);
         memset(buffer, 0, sizeof(buffer));
-        printf("user entered %s %s\n", command, strstr(command, "test"));
         // Run the appropriate functions based on the command
         if (strcmp(command, "quitc\n") == 0)
         {
@@ -437,7 +441,7 @@ void crequest(int new_socket)
             printf("Sever Died\n");
             break;
         }
-        else if (strstr(command, "w24fn") != NULL)
+        else if (strcmp(command, "w24fn\n") == 0)
         {
             // return details of the file if found
             char* fileName = strchr(command, ' ') + 1;
@@ -457,66 +461,51 @@ void crequest(int new_socket)
                 getStatOfFile(new_socket, command);
             }
         }
-        else if (strstr(command, "dirlist -a") != NULL)
+        else if (strcmp(command, "dirlist -a\n") == 0)
         {
             char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | sort | xargs -0 -I{} basename {}");
             sendString(new_socket, temp);
             free(temp);
         }
-        else if (strstr(command, "dirlist -t") != NULL)
+        else if (strcmp(command, "dirlist -t\n") == 0)
         {
 
             char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} stat --format='%W*{}' {} | sort -t '*' -k 1 -r | awk -F '*' '{print $2}' | xargs -I{} basename {}");
             sendString(new_socket, temp);
             free(temp);
         }
-        // test
-        else if (strstr(command, "test") != NULL)
-        {
-            // Try using this splitString function
-            char** words = split_string(command);
-            // Print the words
-            int i = 0;
-            while (words[i] != NULL)
-            {   
-                printf("%s\n", words[i]);
-                i++;
-            }
-            char* temp2;
-            // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
-            // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
-            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
-            // asprintf(&temp2, "find ~/ -type f -name '%s' -o -name '%s' -o -name '%s' -not -path '*/.*'", words[1], words[2], words[3]);
-            // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", a, b, c);
-            printf("%s\n", temp2);
-            char* temp = commandHelper(temp2);
-            printf("hello\n");
-            printf("%d \n",strlen(temp));
-            // if no files found send no as a message to client
-            if (strlen(temp)==0)
-            {
+        else if (checkCondition(command, "hayden")) {
+            
+            printf("Inside hayden\n");
+            printf("Command %s\n", command);
+            char** result = split_string(command);
+            printf("\nASDFsdf\n");
+            printf("\nThis is the data sent by the user %s\n", result[1]);
+            char *temp2;
+            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
+            // printf("\n Final Command to Run is %s \n", temp2);
+            if(strlen(commandHelper(strdup(temp2))) == 0){
                sendString(new_socket, "no");
                continue;
             }
-            // if files available send yes a as message to client
             sendString(new_socket, "yes");
-            // printf
-            
-            createTheTar(resolve_paths(temp));
-            // sendString(new_socket, temp);
-            // free(temp);
-            printf("server\n");
+            createTheTar(resolve_paths(commandHelper(strdup(temp2))));
             sendFile(new_socket);
+
+
+        }
+        else{
+            printf("NO mathces found\n");
         }
     }
     kill(getppid(), SIGFPE);
     printf("client disconnected\n");
 }
-void sigChildHandler(){
+void sigChildHandler() {
     numberOfClients -= 1;
     updateLog();
 }
-    
+
 
 int main()
 {
