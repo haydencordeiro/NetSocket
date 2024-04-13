@@ -317,6 +317,7 @@ char* resolve_paths(const char* paths)
 
 char* runPopenWithArray(char* s)
 {
+
     char* args[] = {
         "bash",
         "-c",
@@ -333,26 +334,26 @@ char* runPopenWithArray(char* s)
     if (child > 0) {
 
         // parent
+        close(p[1]);
+        printf("Starting executing");
         waitpid(child, NULL, 0);
         char* result = (char*)malloc(MAX_OUTPUT_SIZE);
         printf("Reading Data\n");
         read(p[0], result, MAX_OUTPUT_SIZE);
         printf("Done Reading\n");
         printf("%s", result);
-        result++;
         return result;
     }
     else {
         // child
+        close(p[0]);
         dup2(p[1], 1);
-        write(p[1], "#", 1);
         if (execvp(args[0], args) == -1)
         {
 
         }
     }
 }
-
 char* addZeros(int num)
 {
     char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
@@ -516,7 +517,7 @@ void crequest(int new_socket)
         else if (strstr(command, "dirlist -t") != NULL)
         {
 
-            char* temp = runPopenWithArray("stat --format='%n-%W' ~/*/ | sort -rn | awk '{print $1}' | awk -F'/' '{print $(NF-1)}'");
+            char* temp = runPopenWithArray("find ~/ -type d -not -path '*/.*' -exec stat --format='%W-{}' {} \\; | sort -t '-' -k 1 -r");
             sendString(new_socket, temp);
             free(temp);
         }
