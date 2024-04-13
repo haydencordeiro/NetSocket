@@ -315,45 +315,47 @@ char* resolve_paths(const char* paths)
 // }
 
 
-char* runPopenWithArray(char* s)
-{
-
-    char* args[] = {
-        "bash",
-        "-c",
-        s,
-        NULL
-    };
-    // Execute the command using execvp
+char* runPopenWithArray(char* s) {
+    char* args[] = {"bash", "-c", s, NULL};
+    
+    // Create a pipe
     int p[2];
-    if (pipe(p) < 0)
-    {
-        exit(0);
+    if (pipe(p) < 0) {
+        perror("Pipe creation failed");
+        exit(EXIT_FAILURE);
     }
-    int child = fork();
-    if (child > 0) {
-
-        // parent
-        close(p[1]);
-        printf("Starting executing");
-        waitpid(child, NULL, 0);
+    
+    // Fork a child process
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("Fork failed");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) { // Child process
+        close(p[0]); // Close reading end of pipe
+        dup2(p[1], STDOUT_FILENO); // Redirect stdout to the pipe write end
+        close(p[1]); // Close the write end of the pipe in the child
+        if (execvp(args[0], args) == -1) {
+            perror("Execution failed");
+            exit(EXIT_FAILURE);
+        }
+    } else { // Parent process
+        close(p[1]); // Close the write end of the pipe in the parent
         char* result = (char*)malloc(MAX_OUTPUT_SIZE);
-        printf("Reading Data\n");
-        read(p[0], result, MAX_OUTPUT_SIZE);
-        printf("Done Reading\n");
-        printf("%s", result);
+        ssize_t total_read = 0;
+        ssize_t bytes_read;
+        while ((bytes_read = read(p[0], result + total_read, MAX_OUTPUT_SIZE - total_read)) > 0) {
+            total_read += bytes_read;
+        }
+        if (bytes_read < 0) {
+            return "\0";
+        }
+        close(p[0]); // Close the read end of the pipe in the parent
+        // Ensure null-termination
+        result[total_read] = '\0';
         return result;
     }
-    else {
-        // child
-        close(p[0]);
-        dup2(p[1], 1);
-        if (execvp(args[0], args) == -1)
-        {
-
-        }
-    }
 }
+
 char* addZeros(int num)
 {
     char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
@@ -517,7 +519,7 @@ void crequest(int new_socket)
         else if (strstr(command, "dirlist -t") != NULL)
         {
 
-            char* temp = runPopenWithArray("find ~/ -type d -not -path '*/.*' -exec stat --format='%W-{}' {} \\; | sort -t '-' -k 1 -r");
+            char* temp = runPopenWithArray("find ~/ -type d -not -path '*/.*' -exec stat --format='%W-{}' {} \\; | sort -t '-' -k 1 -r | awk -F '-' '{print $2}'");
             sendString(new_socket, temp);
             free(temp);
         }
