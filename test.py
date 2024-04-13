@@ -25,10 +25,23 @@ def get_system_stats():
     return cpu_percent, memory_percent
 
 def get_number_of_clients():
-    with open('count.txt', 'r') as file:
-    # Read the integer value from the file
-        count_value = int(file.read())
-        return count_value
+    try:
+        with open('count.txt', 'r') as file:
+        # Read the integer value from the file
+            count_value = int(file.read())
+            return count_value
+    except:
+        pass
+    return 0
+
+def get_active_clients(filename):
+    try:
+        with open(filename, 'r') as file:
+        # Read the integer value from the file
+            count_value = int(file.read())
+            return count_value
+    except:
+        pass
     return 0
 
 # Write CPU and memory utilization to InfluxDB
@@ -42,8 +55,11 @@ while True:
         .field("cpu_percent", cpu_percent)
         .field("memory_percent", memory_percent)
         .field("client_count", get_number_of_clients())
+        .field("server_active_clients", get_active_clients('server.txt'))
+        .field("mirror1_active_clients", get_active_clients('mirror1.txt'))
+        .field("mirror2_acservertive_clients", get_active_clients('mirror2.txt'))
     )
-    print(cpu_percent)
+    print(get_active_clients('server.txt'))
     
     # Write the data point to InfluxDB
     write_api.write(bucket=bucket, org=org, record=point)
