@@ -116,12 +116,13 @@ int main()
 {
     int client_socket = create_socket();
     connect_to_server(client_socket,PORT);
+    send(client_socket, "0", 1, 0);
     int newPort = atoi(receiveDataHelper(client_socket));
     close(client_socket);
 
     client_socket = create_socket();
     connect_to_server(client_socket,newPort);
-
+    send(client_socket, "1", 1, 0);
     char command[1024];
     while (1)
     {
@@ -140,15 +141,15 @@ int main()
         send(client_socket, command, strlen(command), 0);
         if (strstr(command, "w24fn") != NULL)
         {
-            receiveDataHelper(client_socket);
+            printf("%s",receiveDataHelper(client_socket));
         }
         else if (strstr(command, "dirlist -t") != NULL)
         {
-            receiveDataHelper(client_socket);
+            printf("%s",receiveDataHelper(client_socket));
         }
         else if (strstr(command, "dirlist -a") != NULL)
         {
-            receiveDataHelper(client_socket);
+            printf("%s",receiveDataHelper(client_socket));
         }
         else if (strstr(command, "quitc") != NULL)
         {

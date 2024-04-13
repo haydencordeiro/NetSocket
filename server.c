@@ -23,20 +23,23 @@ int numberOfClients = 0;
 char* whichServerToConnect() {
     numberOfClients += 1;
     int serverNumber;
-    
+
     // Assign server based on the current number of clients
     if (numberOfClients <= 3) {
         serverNumber = 8080;
-    } else if (numberOfClients <= 6) {
+    }
+    else if (numberOfClients <= 6) {
         serverNumber = 8081;
-    } else if (numberOfClients <= 9) {
+    }
+    else if (numberOfClients <= 9) {
         serverNumber = 8082;
-    } else {
+    }
+    else {
         // Round-robin assignment after the first 9 clients
         int remainingClients = numberOfClients - 9;
         serverNumber = 8080 + (remainingClients % 3);
     }
-    
+
     // Convert server number to string and return
     static char server[5];
     sprintf(server, "%d", serverNumber);
@@ -340,21 +343,22 @@ char* resolve_paths(const char* paths)
 
 
 char* runPopenWithArray(char* s) {
-    char* args[] = {"bash", "-c", s, NULL};
-    
+    char* args[] = { "bash", "-c", s, NULL };
+
     // Create a pipe
     int p[2];
     if (pipe(p) < 0) {
         perror("Pipe creation failed");
         exit(EXIT_FAILURE);
     }
-    
+
     // Fork a child process
     pid_t pid = fork();
     if (pid < 0) {
         perror("Fork failed");
         exit(EXIT_FAILURE);
-    } else if (pid == 0) { // Child process
+    }
+    else if (pid == 0) { // Child process
         close(p[0]); // Close reading end of pipe
         dup2(p[1], STDOUT_FILENO); // Redirect stdout to the pipe write end
         close(p[1]); // Close the write end of the pipe in the child
@@ -362,7 +366,8 @@ char* runPopenWithArray(char* s) {
             perror("Execution failed");
             exit(EXIT_FAILURE);
         }
-    } else { // Parent process
+    }
+    else { // Parent process
         close(p[1]); // Close the write end of the pipe in the parent
         char* result = (char*)malloc(MAX_OUTPUT_SIZE);
         ssize_t total_read = 0;
@@ -641,7 +646,13 @@ int main()
             exit(EXIT_FAILURE);
         }
 
-        sendString(new_socket, whichServerToConnect());
+        char buffer[2] = { 0 };
+        read(new_socket, buffer, 1);
+        printf("Server Received %s\n", buffer);
+        if (strstr(buffer, "0") != NULL) {
+            printf("Inside this loop");
+            sendString(new_socket, whichServerToConnect());
+        }
         // Fork a child process to handle the client request
         int pid = fork();
 
