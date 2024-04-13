@@ -441,7 +441,7 @@ void crequest(int new_socket)
             printf("Sever Died\n");
             break;
         }
-        else if (strcmp(command, "w24fn\n") == 0)
+        else if (checkCondition(command, "w24fn"))
         {
             // return details of the file if found
             char* fileName = strchr(command, ' ') + 1;
