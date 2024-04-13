@@ -67,7 +67,7 @@ void receiveFileHelper(int client_socket)
     for (int i = 0; i < fileSize; i++)
     {
         read(client_socket, buffer, 1);
-        printf("Data: %s %d %d\n", buffer,i,fileSize);
+        // printf("Data: %s %d %d\n", buffer,i,fileSize);
         write(output_fd, buffer, 1);
         memset(buffer, 0, sizeof(buffer));
     }
@@ -158,8 +158,14 @@ int main()
         }
         else if (strstr(command, "test") !=NULL)
         {
-            // receiveDataHelper(client_socket);
+            
             printf("client\n");
+            if (strcmp(receiveDataHelper(client_socket),"no")==0)
+            {
+                // strcmp(receiveDataHelper(client_socket),"00");
+                printf("No file Found\n");
+                continue;
+            }
             receiveFileHelper(client_socket);
         }
     }
