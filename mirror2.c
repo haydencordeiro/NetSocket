@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define PORT 8080
+#define PORT 8081
 // Max Number of Spaces in runCommand
 #define MAX_CMD_LEN 1000
 // Max File Size of 
@@ -18,31 +18,7 @@
 // Used in split string function
 #define MAX_NO_ARGUMENTS 400
 
-// ONLY IN SERVER CODE
-int numberOfClients = 0;
-char* whichServerToConnect() {
-    numberOfClients += 1;
-    int serverNumber;
-    
-    // Assign server based on the current number of clients
-    if (numberOfClients <= 3) {
-        serverNumber = 8080;
-    } else if (numberOfClients <= 6) {
-        serverNumber = 8081;
-    } else if (numberOfClients <= 9) {
-        serverNumber = 8082;
-    } else {
-        // Round-robin assignment after the first 9 clients
-        int remainingClients = numberOfClients - 9;
-        serverNumber = 8080 + (remainingClients % 3);
-    }
-    
-    // Convert server number to string and return
-    static char server[5];
-    sprintf(server, "%d", serverNumber);
-    return server;
-}
-// END ONLY IN SERVER CODE
+
 
 // Helper method to remove spaces from a string
 char* stripSpaces(char* word)
@@ -641,7 +617,6 @@ int main()
             exit(EXIT_FAILURE);
         }
 
-        sendString(new_socket, whichServerToConnect());
         // Fork a child process to handle the client request
         int pid = fork();
 
