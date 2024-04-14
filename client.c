@@ -23,7 +23,8 @@ int create_socket()
     return client_socket;
 }
 
-void connect_to_server(int client_socket,int portNumber)
+
+void connect_to_server(int client_socket, int portNumber)
 {
     // Address object
     struct sockaddr_in server_address;
@@ -37,16 +38,43 @@ void connect_to_server(int client_socket,int portNumber)
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(portNumber);
     // ARGS (Socket descriptor, address object, size of the address object)
-    if (connect(client_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+    if (connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0)
     {
         perror("Connection failed");
         exit(EXIT_FAILURE);
     }
 }
 
+
+int isValidDateFormat(const char* input) {
+    int year, day, month;
+    char separator1, separator2;
+
+    // Parse the input string
+    if (sscanf(input, "%d-%d-%d", &year, &day, &month) != 3) {
+        return 0; // Parsing failed
+    }
+
+    // Check if the separators are correct
+    if (sscanf(input, "%d%c%d%c%d", &year, &separator1, &day, &separator2, &month) != 5) {
+        return 0; // Separators are incorrect
+    }
+    if (separator1 != '-' || separator2 != '-') {
+        return 0; // Separator is not '-'
+    }
+
+    // Check if year, day, and month values are valid
+    if (year < 1000 || year > 9999 || day < 1 || day > 31 || month < 1 || month > 12) {
+        return 0; // Values are out of range
+    }
+
+    return 1; // Format is valid
+}
+
+
 void receiveFileHelper(int client_socket)
 {
-    char buffer[1024] = {0};
+    char buffer[1024] = { 0 };
     printf("insdie\n");
     // Reading size of file
     read(client_socket, buffer, 32);
@@ -56,7 +84,7 @@ void receiveFileHelper(int client_socket)
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
     unlink("./temp.tar.gz");
-    char *outputFilename = "./temp.tar.gz";
+    char* outputFilename = "./temp.tar.gz";
     int output_fd = open(outputFilename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (output_fd == -1)
     {
@@ -75,9 +103,9 @@ void receiveFileHelper(int client_socket)
     close(output_fd);
 }
 
-char * receiveDataHelper(int client_socket)
+char* receiveDataHelper(int client_socket)
 {
-    char buffer[1024] = {0};
+    char buffer[1024] = { 0 };
 
     // Reading size of file
     read(client_socket, buffer, 32);
@@ -86,9 +114,9 @@ char * receiveDataHelper(int client_socket)
     // printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
-    
+
     // Writing the file data
-    char file_data[fileSize +1]; 
+    char file_data[fileSize + 1];
 
     // 
     for (int i = 0; i < fileSize; i++)
@@ -105,31 +133,235 @@ char * receiveDataHelper(int client_socket)
 
 }
 
-char *addZeros(int num)
+char* addZeros(int num)
 {
-    char *num_str = (char *)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
+    char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
     sprintf(num_str, "%032d", num);                    // Format the integer with leading zeros
     return num_str;
 }
 
-void checkCommand(char *command) {
-    // Tokenize the command to check the first part
-    char *token = strtok(command, " ");
+//  Helper method to remove spaces from a string
+char* stripSpaces(char* word)
+{
+    // Skip leading spaces
+    while (isspace(*word))
+        word++;
+    if (*word == '\0') // If the string is empty or contains only spaces
+        return word;
+    // Trim trailing spaces
+    char* end = word + strlen(word) - 1;
+    while (end > word && isspace(*end))
+        end--;
+    // Null-terminate the trimmed string
+    *(end + 1) = '\0';
+    return word;
+}
 
-    if (strcmp(token, "dirlist") == 0) {
-        // Check for the dirlist command options
-        token = strtok(NULL, " ");
-        if (token != NULL && (strcmp(token, "-a") == 0 || strcmp(token, "-t") == 0)) {
-            printf("Valid command: %s\n", command);
-        } else {
-            printf("Usage: dirlist -a OR dirlist -t\n");
+int countSpaces(const char* str) {
+    int count = 0;
+    while (*str != '\0') {
+        if (*str == ' ') {
+            count++;
         }
-    } else if (strcmp(token, "w24fn") == 0 || strcmp(token, "w24fz") == 0 || strcmp(token, "w24ft") == 0 || strcmp(token, "w24fdb") == 0 || strcmp(token, "w24fda") == 0) {
-        // These commands have specific formats
+        str++;
+    }
+    return count;
+}
+
+int hasDot(const char* filename) {
+    while (*filename != '\0') {
+        if (*filename == '.') {
+            return 1;
+        }
+        filename++;
+    }
+    return 0;
+}
+
+char** splitString(char* str, char* delimenter)
+{
+    int count = 0;
+    char** tokens = (char**)malloc(10 * sizeof(char*));
+    if (tokens == NULL)
+    {
+        printf("Memory allocation error\n");
+        return NULL;
+    }
+
+    // tokenize the string
+    char* token = strtok(str, delimenter);
+    while (token != NULL)
+    {
+        // allocate memory
+        tokens[count] = (char*)malloc((strlen(token) + 1) * sizeof(char));
+        if (tokens[count] == NULL)
+        {
+            fprintf(stderr, "Memory allocation error\n");
+            for (int i = 0; i < count; i++)
+                free(tokens[i]);
+            free(tokens);
+            return NULL;
+        }
+        // remove any extra spaces
+        strcpy(tokens[count], stripSpaces(token));
+        count++;
+        token = strtok(NULL, delimenter);
+    }
+    // add NULL to indicate end
+    tokens[count] = NULL;
+    return tokens;
+}
+
+int isInteger(const char* input) {
+    char c;
+    int num;
+    return sscanf(input, "%d%c", &num, &c) == 1;
+}
+
+int checkCommand(char* command) {
+    // Tokenize the command to check the first part
+    // char *token = strtok(command, " ");
+    char* token = strdup(command);
+    char** result = splitString(token, " ");
+    if (strstr(token, "dirlist") != NULL) {
+        if (strcmp(result[0], "dirlist") != 0) {
+            printf("Did you mean dirlist?\n");
+        }
+        if (result[1] != NULL && strcmp(result[1], "-a") == 0) {
+            return 1;
+        }
+        else if (result[1] != NULL && strcmp(result[1], "-t") == 0) {
+            return 1;
+        }
+        else {
+            printf("Usage: dirlist [-a|-t]\n");
+            return 0;
+        }
+    }
+    else if (strstr(token, "w24fn") != NULL || strstr(token, "w24fz") != NULL || strstr(token, "w24ft") != NULL || strstr(token, "w24fdb") != NULL || strstr(token, "w24fda") != NULL) {
+        if (strstr(token, "w24fn") != NULL) {
+            if (strcmp(result[0], "w24fn") != 0) {
+                printf("Did you mean w24fn?\n");
+            }
+            // No file present
+            if (result[1] == NULL) {
+                printf("Usage: w24fn [filename]; requires atleast 1 file");
+                return 0;
+            }
+            // More than one file present
+            if (result[2] != NULL) {
+                printf("Usage: w24fn [filename]; more than one file provided");
+                return 0;
+            }
+            // More than one file present
+            if (!hasDot(result[1])) {
+                printf("Usage: w24fn [filename]; Please Provide Valid Filename");
+                return 0;
+            }
+
+        }
+        else if (strstr(token, "w24fz") != NULL) {
+            if (strcmp(result[0], "w24fz") != 0) {
+                printf("Did you mean w24fz?\n");
+            }
+            // No file present
+            if (result[1] == NULL) {
+                printf("Usage: w24fz [size1 size2]; requires atleast 2 sizes");
+                return 0;
+            }
+            // More than one file present
+            if (result[2] == NULL) {
+                printf("Usage: w24fz [size1 size2]; requires atleast 2 sizes");
+                return 0;
+            }
+            // More than one file present
+            if (result[3] != NULL) {
+                printf("Usage: w24fz [size1 size2]; more than 2 file sizes given");
+                return 0;
+            }
+            if (!isInteger(result[1])) {
+                printf("Usage: w24fz [size1 size2]; size 1 not in int");
+                return 0;
+            }
+            if (!isInteger(result[2])) {
+                printf("Usage: w24fz [size1 size2]; size 2 not in int");
+                return 0;
+            }
+            int size1, size2;
+            size1 = atoi(result[1]);
+            size2 = atoi(result[2]);
+            if (size1 < 0) {
+                printf("Usage: w24fz [size1 size2]; size 1 should be greater than 0");
+                return 0;
+            }
+            if (size1 > size2) {
+                printf("Usage: w24fz [size1 size2]; size 2 should be greater than size 1");
+                return 0;
+            }
+
+        }
+        else if (strstr(token, "w24ft") != NULL) {
+            if (strcmp(result[0], "w24ft") != 0) {
+                printf("Did you mean w24ft?\n");
+            }
+            if (result[1] == NULL) {
+                printf("Usage: w24fz [ext 1, ext 2, ext 3]; requires atleast 1 extension");
+                return 0;
+            }
+
+            // More than 4 extension not allowed
+            if (result[3] != NULL) {
+                printf("Usage: w24fz [ext 1, ext 2, ext 3]; support only upto 3 extension");
+                return 0;
+            }
+        }
+
+        else if (strstr(token, "w24fdb") != NULL) {
+            if (strcmp(result[0], "w24fdb") != 0) {
+                printf("Did you mean w24fdb?\n");
+            }
+            // Only 1 allowed
+            if (result[1] == NULL) {
+                printf("Usage: w24fdb [date]; No date provided");
+                return 0;
+            }
+
+            // More than 4 extension not allowed
+            if (result[2] != NULL) {
+                printf("Usage: w24fdb [date]; support only upto 3 extension");
+                return 0;
+            }
+            if (!isValidDateFormat(result[1])) {
+                printf("Usage: w24fdb [date]; enter a valid date in format YYYY-MM-DD");
+                return 0;
+            }
+        }
+        else if (strstr(token, "w24fda") != NULL) {
+            if (strcmp(result[0], "w24fda") != 0) {
+                printf("Did you mean w24fda?\n");
+            }
+            // Only 1 allowed
+            if (result[1] == NULL) {
+                printf("Usage: w24fda [date]; No date provided");
+                return 0;
+            }
+
+            // More than 4 extension not allowed
+            if (result[2] != NULL) {
+                printf("Usage: w24fda [date]; support only upto 3 extension");
+                return 0;
+            }
+            if (!isValidDateFormat(result[1])) {
+                printf("Usage: w24fda [date]; enter a valid date in format YYYY-MM-DD");
+                return 0;
+            }
+        }
+
+    }
+    else if (strcmp(token, "quitc") == 0) {
         printf("Valid command: %s\n", command);
-    } else if (strcmp(token, "quitc") == 0) {
-        printf("Valid command: %s\n", command);
-    } else {
+    }
+    else {
         printf("Usage:\n");
         printf("dirlist -a\n");
         printf("dirlist -t\n");
@@ -139,18 +371,20 @@ void checkCommand(char *command) {
         printf("w24fdb date\n");
         printf("w24fda date\n");
         printf("quitc\n");
+        return 0;
     }
+    return 1;
 }
 int main()
 {
     int client_socket = create_socket();
-    connect_to_server(client_socket,PORT);
+    connect_to_server(client_socket, PORT);
     send(client_socket, "0", 1, 0);
     int newPort = atoi(receiveDataHelper(client_socket));
     close(client_socket);
 
     client_socket = create_socket();
-    connect_to_server(client_socket,newPort);
+    connect_to_server(client_socket, newPort);
     send(client_socket, "1", 1, 0);
     char command[1024];
     while (1)
@@ -159,6 +393,9 @@ int main()
         // scanf("%[^\n]s", command);
         printf("\nCLIENT: ");
         fgets(command, 1024, stdin);
+        if (checkCommand(command) == 0) {
+            continue;
+        }
 
         printf("user entered %s\n", command);
         // char *command = "dirlist -t";
@@ -171,59 +408,59 @@ int main()
         send(client_socket, command, strlen(command), 0);
         if (strstr(command, "w24fn") != NULL)
         {
-            printf("%s",receiveDataHelper(client_socket));
+            printf("%s", receiveDataHelper(client_socket));
         }
         else if (strstr(command, "dirlist -t") != NULL)
         {
-            printf("%s",receiveDataHelper(client_socket));
+            printf("%s", receiveDataHelper(client_socket));
         }
         else if (strstr(command, "dirlist -a") != NULL)
         {
-            printf("%s",receiveDataHelper(client_socket));
+            printf("%s", receiveDataHelper(client_socket));
         }
         else if (strstr(command, "quitc") != NULL)
         {
             close(client_socket);
             return 0;
         }
-        else if (strstr(command, "w24ft") !=NULL)
+        else if (strstr(command, "w24ft") != NULL)
         {
-            
+
             printf("client\n");
-            if (strcmp(receiveDataHelper(client_socket),"no")==0)
+            if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
         }
-        else if (strstr(command, "w24fz") !=NULL)
+        else if (strstr(command, "w24fz") != NULL)
         {
-            
+
             printf("client\n");
-            if (strcmp(receiveDataHelper(client_socket),"no")==0)
+            if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
         }
-         else if (strstr(command, "w24fda") !=NULL)
+        else if (strstr(command, "w24fda") != NULL)
         {
-            
+
             printf("client\n");
-            if (strcmp(receiveDataHelper(client_socket),"no")==0)
+            if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
         }
-        else if (strstr(command, "w24fdb") !=NULL)
+        else if (strstr(command, "w24fdb") != NULL)
         {
-            
+
             printf("client\n");
-            if (strcmp(receiveDataHelper(client_socket),"no")==0)
+            if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
                 continue;
