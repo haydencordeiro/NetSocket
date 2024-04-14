@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #define PORT 8081
 // Max Number of Spaces in runCommand
@@ -546,7 +548,7 @@ void crequest(int new_socket)
         {    
             char** result = split_string(command,"fileSize");
             char *temp2;
-            asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' -print0 | xargs -0 -I{}  stat -c '%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 > date' | awk -F '*' '{print $2}'", result[1]);
+            asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' -print0 | xargs -0 -I{}  stat -c '%%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 > date' | awk -F '*' '{print $2}'", result[1]);
             // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
             // printf("\n Final Command to Run is %s \n", temp2);
             if(strlen(commandHelper(strdup(temp2))) == 0){
@@ -570,7 +572,7 @@ void crequest(int new_socket)
         {    
             char** result = split_string(command,"fileSize");
             char *temp2;
-            asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' -print0 | xargs -0 -I{}  stat -c '%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 < date' | awk -F '*' '{print $2}'", result[1]);
+            asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' -print0 | xargs -0 -I{}  stat -c '%%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 < date' | awk -F '*' '{print $2}'", result[1]);
             // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
             // printf("\n Final Command to Run is %s \n", temp2);
             if(strlen(commandHelper(strdup(temp2))) == 0){

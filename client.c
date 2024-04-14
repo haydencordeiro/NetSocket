@@ -192,7 +192,7 @@ char** splitString(char* str, char* delimenter)
 }
 
 // check if date format taken as input is valid or not
-int isValidDateFormat(const char* input) {
+int isValidDateFormat(char* input) {
     char** date = splitString(input, "-");
     if(date[0] == NULL || date[0] == NULL || date[0] == NULL)
     {
