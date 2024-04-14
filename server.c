@@ -541,7 +541,7 @@ void crequest(int new_socket)
             // free(unique_string);
         }
         
-        else if (checkCondition(command, "w24da")) 
+        else if (checkCondition(command, "w24fda")) 
         {    
             printf("Inside hayden\n");
             printf("Command %s\n", command);
@@ -569,7 +569,7 @@ void crequest(int new_socket)
             sendFile(new_socket,strdup(unique_string));
             // free(unique_string);
         }
-        else if (checkCondition(command, "w24db")) 
+        else if (checkCondition(command, "w24fdb")) 
         {    
             printf("Inside hayden\n");
             printf("Command %s\n", command);
