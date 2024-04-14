@@ -38,10 +38,10 @@ char* whichServerToConnect() {
         serverNumber = 8081;
     }
     else if (totalNumberOfClients <= 6) {
-        serverNumber = 8081;
+        serverNumber = 8082;
     }
     else if (totalNumberOfClients <= 9) {
-        serverNumber = 8082;
+        serverNumber = 8083;
     }
     else {
         // Round-robin assignment after the first 9 clients
