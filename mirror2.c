@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define PORT 8082
+#define PORT 8083
 // Max Number of Spaces in runCommand
 #define MAX_CMD_LEN 1000
 // Max File Size of 
@@ -18,12 +18,9 @@
 // Used in split string function
 #define MAX_NO_ARGUMENTS 400
 int numberOfClients = 0;
-// Update Log
-void updateLog(){
-    char* temp;
-    asprintf(&temp, "echo %d > mirror2.txt", numberOfClients);
-    system(temp);
-}
+
+
+
 
 // Helper method to remove spaces from a string
 char* stripSpaces(char* word)
@@ -42,7 +39,7 @@ char* stripSpaces(char* word)
     return word;
 }
 
-
+// helper method to remove special characters
 void remove_special_chars(char* str)
 {
     int i, j = 0;
@@ -93,8 +90,8 @@ char** splitString(char* str, char* delimenter)
     return tokens;
 }
 
-
-char** split_string(const char* input)
+// helper method to split strings
+char** split_string(const char* input, char* option)
 {
     char** words = malloc(4 * sizeof(char*));
     if (words == NULL)
@@ -123,7 +120,14 @@ char** split_string(const char* input)
         }
 
         remove_special_chars(token); // Remove special characters if needed
+        if (strcmp(option,"fileExtension")==0)
+        {
         strcpy(words[i], "*.");      // Add ".*" before the word
+        }
+            if (strcmp(option,"fileSize")==0)
+        {
+        strcpy(words[i], "");      // Add ".*" before the word
+        }    
         strcat(words[i], token);     // Concatenate the word itself
         token = strtok(NULL, " ");
         i++;
@@ -141,6 +145,7 @@ char** split_string(const char* input)
     return words;
 }
 
+// helper method to tokenize extensions for w24ft
 void tokenize_extensions(const char* str, char* a, char* b, char* c)
 {
     // Tokenize the input string
@@ -186,16 +191,20 @@ void tokenize_extensions(const char* str, char* a, char* b, char* c)
 
     free(str_copy);
 }
-void createTheTar(char* temp1)
+
+// method to create tarfile in serverside with unique id
+void createTheTar(char* temp1, char* tarFile)
 {
+    // printf("%s\n",tarFile);
     // printf("%s\n",temp1);
     char* temp;
 
-    asprintf(&temp, "tar -czvf temp.tar.gz --transform='s|.*/||' %s", temp1);
+    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s",tarFile, temp1);
     printf("%s\n", temp);
     system(temp);
 }
 
+// helper method for escape sequence space to cleanup the string
 char* resolve_paths(const char* paths)
 {
     int length = strlen(paths);
@@ -229,6 +238,7 @@ char* resolve_paths(const char* paths)
     return resolved_paths;
 }
 
+// helper method to multiple piping commands.
 char* commandHelper(char* s) {
     char* args[] = { "bash", "-c", s, NULL };
 
@@ -268,10 +278,18 @@ char* commandHelper(char* s) {
         close(p[0]); // Close the read end of the pipe in the parent
         // Ensure null-termination
         result[total_read] = '\0';
-        return result;
+        return strdup(result);
     }
 }
 
+// Update Log
+void updateLog() {
+    char* temp;
+    asprintf(&temp, "echo %d > mirror2.txt", numberOfClients);
+    commandHelper(temp);
+}
+
+// helper method to to make 32bit integer
 char* addZeros(int num)
 {
     char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
@@ -279,6 +297,7 @@ char* addZeros(int num)
     return num_str;
 }
 
+// helper method to get fileSize
 int getFileSize(char* filePath)
 {
     int input_fd = open(filePath, O_RDONLY);
@@ -288,24 +307,26 @@ int getFileSize(char* filePath)
         exit(EXIT_FAILURE);
     }
     int c = lseek(input_fd, 0, SEEK_END);
-    // printf("%d this is \n",c);
     close(input_fd);
     return c;
 }
 
-void sendFile(int client_socket)
+// helper method to send file from server to client
+void sendFile(int client_socket, char* tarFile)
 {
+    // printf("SEND FILE TARFILE NAME  :  %s \n",tarFile);
     sleep(2);
     char buffer[1024] = { 0 };
 
     // Sending Start of file byte sequence
-    char* fileName = "./temp.tar.gz";
+    // char* fileName = "./temp.tar.gz";
+    char* fileName = tarFile;
     // Calculating file size to send to client
     int fileSize = getFileSize(fileName);
     // Convert the file size to binary string
     char* fileSizeString = addZeros(fileSize);
     // Logging size and binary
-    printf("%d File size %s", fileSize, fileSizeString);
+    // printf("%d File size %s", fileSize, fileSizeString);
     // opening the file to read
     int input_fd = open(fileName, O_RDONLY);
     if (input_fd == -1)
@@ -323,13 +344,14 @@ void sendFile(int client_socket)
         send(client_socket, tempBuffer, 1, 0);
     }
     close(input_fd);
+    unlink(tarFile);
 }
 
 // Helper method to send a String from the client to server
 void sendString(int client_socket, char* s)
 {
     int lenght = strlen(s);
-    printf("Lenght of s %d\n", lenght);
+    // printf("Lenght of s %d\n", lenght);
     // Conver the lenght to a string of lenght 8 to send to the client
     char* lenghtString = addZeros(lenght);
     // Send Length
@@ -367,13 +389,16 @@ void getStatOfFile(int client_socket, char* filePath)
     sendString(client_socket, output);
 }
 
-void printData(char* s)
-{
-    printf("Inside pd with value %s\n", s);
+// helper method to check null condition
+int checkCondition(char * command, char * subString){
+    char* temp = strdup(command);
+    return strstr(temp, subString)!= NULL;
 }
+
+// helper method to check client request for further processing
 void crequest(int new_socket)
 {
-    printf("New Client Connected");
+    printf("New Client Connected \n");
     // Function to handle client requests
     char buffer[1024] = { 0 };
     int valread;
@@ -390,15 +415,14 @@ void crequest(int new_socket)
 
         // Get command from the client
         int n = read(new_socket, buffer, sizeofCommand);
-        printf("%d\n", n);
         if (n == 0)
         {
             break;
         }
 
         char* command = strdup(buffer);
+        printf("Client Request : %s \n", command);
         memset(buffer, 0, sizeof(buffer));
-        printf("user entered %s %s\n", command, strstr(command, "test"));
         // Run the appropriate functions based on the command
         if (strcmp(command, "quitc\n") == 0)
         {
@@ -406,7 +430,7 @@ void crequest(int new_socket)
             printf("Sever Died\n");
             break;
         }
-        else if (strstr(command, "w24fn") != NULL)
+        else if (checkCondition(command, "w24fn"))
         {
             // return details of the file if found
             char* fileName = strchr(command, ' ') + 1;
@@ -416,7 +440,7 @@ void crequest(int new_socket)
             // Construct the command with the filepath enclosed in double quotes
             asprintf(&command, "\"%s\"", filePath);
 
-            printf("File Path %s", filePath);
+            // printf("File Path %s", filePath);
             if (strcmp("-1", filePath) == 0)
             {
                 sendString(new_socket, "Couldnt Find File");
@@ -426,51 +450,129 @@ void crequest(int new_socket)
                 getStatOfFile(new_socket, command);
             }
         }
-        else if (strstr(command, "dirlist -a") != NULL)
+        else if (strcmp(command, "dirlist -a\n") == 0)
         {
-            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | sort | xargs -0 -I{} basename {}");
+            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} basename {} | sort");
             sendString(new_socket, temp);
             free(temp);
         }
-        else if (strstr(command, "dirlist -t") != NULL)
+        else if (strcmp(command, "dirlist -t\n") == 0)
         {
 
-            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} stat --format='%W*{}' {} | sort -t '*' -k 1 -r | awk -F '*' '{print $2}' | xargs -I{} basename {}");
+            char* temp = commandHelper("find ~/ -maxdepth 1 -type d -not -path '*/.*' -print0 | xargs -0 -I{} stat --format='%W*{}' {} | sort -t '*' -k 1 | awk -F '*' '{print $2}' | xargs -I{} basename {}");
             sendString(new_socket, temp);
             free(temp);
         }
-        // test
-        else if (strstr(command, "test") != NULL)
-        {
-            // Try using this splitString function
-            char** words = split_string(command);
-            // Print the words
-            int i = 0;
-            while (words[i] != NULL)
-            {
-                printf("%s\n", words[i]);
-                i++;
+        else if (checkCondition(command, "w24ft")) 
+        {    
+            char** result = split_string(command,"fileExtension");
+            char *temp2;
+            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
+            // printf("\n Final Command to Run is %s \n", temp2);
+            if(strlen(commandHelper(strdup(temp2))) == 0){
+               sendString(new_socket, "no");
+               continue;
             }
-            char* temp2;
-            asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", words[1], words[2], words[3]);
-            // asprintf(&temp2, "find ~/Desktop/asp/asplab6 -type f \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", a, b, c);
-            printf("%s\n", temp2);
-            char* temp = commandHelper(temp2);
-            createTheTar(resolve_paths(temp));
-            // sendString(new_socket, temp);
-            // free(temp);
-            printf("server\n");
-            sendFile(new_socket);
+            sendString(new_socket, "yes");
+            
+            srand(time(NULL));
+            char* unique_string = (char*)malloc(100 * sizeof(char));
+            // Generate random number
+            int random_number = 100000000 + rand() % 900000000;
+             // Concatenate random number with the specified format
+            snprintf(unique_string, 100, "%d.tar.gz", random_number);
+
+            createTheTar(resolve_paths(commandHelper(strdup(temp2))),strdup(unique_string));
+            sendFile(new_socket,strdup(unique_string));
+            // free(unique_string);
+        }
+        else if (checkCondition(command, "w24fz")) 
+        {    
+            char** result = split_string(command,"fileSize");
+            char *temp2;
+            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' -size +%sc -size -%sc", result[1], result[2]);
+            // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
+            // printf("\n Final Command to Run is %s \n", temp2);
+            if(strlen(commandHelper(strdup(temp2))) == 0){
+               sendString(new_socket, "no");
+               continue;
+            }
+            sendString(new_socket, "yes");
+            
+            srand(time(NULL));
+            char* unique_string = (char*)malloc(100 * sizeof(char));
+            // Generate random number
+            int random_number = 100000000 + rand() % 900000000;
+             // Concatenate random number with the specified format
+            snprintf(unique_string, 100, "%d.tar.gz", random_number);
+
+            createTheTar(resolve_paths(commandHelper(strdup(temp2))),strdup(unique_string));
+            sendFile(new_socket,strdup(unique_string));
+            // free(unique_string);
+        }
+        
+        else if (checkCondition(command, "w24fda")) 
+        {    
+            char** result = split_string(command,"fileSize");
+            char *temp2;
+            asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' | xargs -I{}  stat -c '%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 > date' | awk -F '*' '{print $2}'", result[1]);
+            // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
+            // printf("\n Final Command to Run is %s \n", temp2);
+            if(strlen(commandHelper(strdup(temp2))) == 0){
+               sendString(new_socket, "no");
+               continue;
+            }
+            sendString(new_socket, "yes");
+            
+            srand(time(NULL));
+            char* unique_string = (char*)malloc(100 * sizeof(char));
+            // Generate random number
+            int random_number = 100000000 + rand() % 900000000;
+             // Concatenate random number with the specified format
+            snprintf(unique_string, 100, "%d.tar.gz", random_number);
+
+            createTheTar(resolve_paths(commandHelper(strdup(temp2))),strdup(unique_string));
+            sendFile(new_socket,strdup(unique_string));
+            // free(unique_string);
+        }
+        else if (checkCondition(command, "w24fdb")) 
+        {    
+            char** result = split_string(command,"fileSize");
+            char *temp2;
+            asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' | xargs -I{}  stat -c '%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 < date' | awk -F '*' '{print $2}'", result[1]);
+            // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
+            // printf("\n Final Command to Run is %s \n", temp2);
+            if(strlen(commandHelper(strdup(temp2))) == 0){
+               sendString(new_socket, "no");
+               continue;
+            }
+            sendString(new_socket, "yes");
+            
+            srand(time(NULL));
+            char* unique_string = (char*)malloc(100 * sizeof(char));
+            // Generate random number
+            int random_number = 100000000 + rand() % 900000000;
+             // Concatenate random number with the specified format
+            snprintf(unique_string, 100, "%d.tar.gz", random_number);
+
+            createTheTar(resolve_paths(commandHelper(strdup(temp2))),strdup(unique_string));
+            sendFile(new_socket,strdup(unique_string));
+            // free(unique_string);
+        }
+        else{
+            printf("No matches found\n");
         }
     }
     kill(getppid(), SIGFPE);
     printf("client disconnected\n");
 }
-void sigChildHandler(){
+
+// siginthandler
+void sigChildHandler() {
     numberOfClients -= 1;
     updateLog();
 }
-    
+
 
 int main()
 {
@@ -493,7 +595,7 @@ int main()
 
 
     // SKI{}
-    // Forcefully attaching socket to the port 8080
+    // Forcefully attaching socket to the port 8081
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
         &opt, sizeof(opt)))
     {
@@ -539,7 +641,6 @@ int main()
             perror("accept");
             exit(EXIT_FAILURE);
         }
-
 
         numberOfClients += 1;
         updateLog();

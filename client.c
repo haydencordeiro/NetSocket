@@ -10,7 +10,7 @@
 
 #define PORT 8081
 
-
+// function to create socket
 int create_socket()
 {
     // Create socket (Same family and socket type as server)
@@ -23,7 +23,7 @@ int create_socket()
     return client_socket;
 }
 
-
+// function to connect to server
 void connect_to_server(int client_socket, int portNumber)
 {
     // Address object
@@ -45,7 +45,7 @@ void connect_to_server(int client_socket, int portNumber)
     }
 }
 
-
+// check if date format taken as input is valid or not
 int isValidDateFormat(const char* input) {
     int year, day, month;
     char separator1, separator2;
@@ -71,7 +71,7 @@ int isValidDateFormat(const char* input) {
     return 1; // Format is valid
 }
 
-
+// function to receive tarfiles from server to client
 void receiveFileHelper(int client_socket)
 {
     char buffer[1024] = { 0 };
@@ -103,6 +103,7 @@ void receiveFileHelper(int client_socket)
     close(output_fd);
 }
 
+// function to receive string data from server to client
 char* receiveDataHelper(int client_socket)
 {
     char buffer[1024] = { 0 };
@@ -133,6 +134,7 @@ char* receiveDataHelper(int client_socket)
 
 }
 
+// function to addZeros to given number and makes it to 32 bit format
 char* addZeros(int num)
 {
     char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
@@ -157,6 +159,7 @@ char* stripSpaces(char* word)
     return word;
 }
 
+//function to count spaces
 int countSpaces(const char* str) {
     int count = 0;
     while (*str != '\0') {
@@ -168,6 +171,7 @@ int countSpaces(const char* str) {
     return count;
 }
 
+// checking substring . in a string
 int hasDot(const char* filename) {
     while (*filename != '\0') {
         if (*filename == '.') {
@@ -178,6 +182,7 @@ int hasDot(const char* filename) {
     return 0;
 }
 
+//split string based on a given delimiter 
 char** splitString(char* str, char* delimenter)
 {
     int count = 0;
@@ -212,15 +217,16 @@ char** splitString(char* str, char* delimenter)
     return tokens;
 }
 
+// check if input is an integer or not
 int isInteger(const char* input) {
     char c;
     int num;
     return sscanf(input, "%d%c", &num, &c) == 1;
 }
 
+// client side validation for all commands before sending it into the server side
 int checkCommand(char* command) {
     // Tokenize the command to check the first part
-    // char *token = strtok(command, " ");
     char* token = strdup(command);
     char** result = splitString(token, " ");
     if (strstr(token, "dirlist") != NULL) {
@@ -389,8 +395,6 @@ int main()
     char command[1024];
     while (1)
     {
-        // char buffer[1024] = {0};
-        // scanf("%[^\n]s", command);
         printf("\nCLIENT: ");
         fgets(command, 1024, stdin);
         if (checkCommand(command) == 0) {
@@ -398,10 +402,7 @@ int main()
         }
 
         printf("user entered %s\n", command);
-        // char *command = "dirlist -t";
-        // char *command = "w24fn temp.txt";
-
-        // Send lenght of the command to be received
+        // Send length of the command to be received
         send(client_socket, addZeros(strlen(command)), 32, 0);
 
         // Send command to server

@@ -18,43 +18,9 @@
 // Used in split string function
 #define MAX_NO_ARGUMENTS 400
 int numberOfClients = 0;
-// Update Log
-void updateLog() {
-    char* temp;
-    asprintf(&temp, "echo %d > server.txt", numberOfClients);
-    system(temp);
-}
 
-// ONLY IN SERVER CODE
-int totalNumberOfClients = 0;
-char* whichServerToConnect() {
-    totalNumberOfClients += 1;
-    int serverNumber;
-    char* temp;
-    asprintf(&temp, "echo %d > count.txt", totalNumberOfClients);
-    system(temp);
-    // Assign server based on the current number of clients
-    if (totalNumberOfClients <= 3) {
-        serverNumber = 8081;
-    }
-    else if (totalNumberOfClients <= 6) {
-        serverNumber = 8082;
-    }
-    else if (totalNumberOfClients <= 9) {
-        serverNumber = 8083;
-    }
-    else {
-        // Round-robin assignment after the first 9 clients
-        int remainingClients = totalNumberOfClients - 10;
-        serverNumber = 8081 + (remainingClients % 3);
-    }
 
-    // Convert server number to string and return
-    static char server[5];
-    sprintf(server, "%d", serverNumber);
-    return server;
-}
-// END ONLY IN SERVER CODE
+
 
 // Helper method to remove spaces from a string
 char* stripSpaces(char* word)
@@ -73,7 +39,7 @@ char* stripSpaces(char* word)
     return word;
 }
 
-
+// helper method to remove special characters
 void remove_special_chars(char* str)
 {
     int i, j = 0;
@@ -124,7 +90,7 @@ char** splitString(char* str, char* delimenter)
     return tokens;
 }
 
-
+// helper method to split strings
 char** split_string(const char* input, char* option)
 {
     char** words = malloc(4 * sizeof(char*));
@@ -179,6 +145,7 @@ char** split_string(const char* input, char* option)
     return words;
 }
 
+// helper method to tokenize extensions for w24ft
 void tokenize_extensions(const char* str, char* a, char* b, char* c)
 {
     // Tokenize the input string
@@ -224,6 +191,8 @@ void tokenize_extensions(const char* str, char* a, char* b, char* c)
 
     free(str_copy);
 }
+
+// method to create tarfile in serverside with unique id
 void createTheTar(char* temp1, char* tarFile)
 {
     // printf("%s\n",tarFile);
@@ -235,6 +204,7 @@ void createTheTar(char* temp1, char* tarFile)
     system(temp);
 }
 
+// helper method for escape sequence space to cleanup the string
 char* resolve_paths(const char* paths)
 {
     int length = strlen(paths);
@@ -268,6 +238,7 @@ char* resolve_paths(const char* paths)
     return resolved_paths;
 }
 
+// helper method to multiple piping commands.
 char* commandHelper(char* s) {
     char* args[] = { "bash", "-c", s, NULL };
 
@@ -311,6 +282,45 @@ char* commandHelper(char* s) {
     }
 }
 
+// Update Log
+void updateLog() {
+    char* temp;
+    asprintf(&temp, "echo %d > server.txt", numberOfClients);
+    commandHelper(temp);
+}
+
+// ONLY IN SERVER CODE
+int totalNumberOfClients = 0;
+char* whichServerToConnect() {
+    totalNumberOfClients += 1;
+    int serverNumber;
+    char* temp;
+    asprintf(&temp, "echo %d > count.txt", totalNumberOfClients);
+    commandHelper(temp);
+    // Assign server based on the current number of clients
+    if (totalNumberOfClients <= 3) {
+        serverNumber = 8081;
+    }
+    else if (totalNumberOfClients <= 6) {
+        serverNumber = 8082;
+    }
+    else if (totalNumberOfClients <= 9) {
+        serverNumber = 8083;
+    }
+    else {
+        // Round-robin assignment after the first 9 clients
+        int remainingClients = totalNumberOfClients - 10;
+        serverNumber = 8081 + (remainingClients % 3);
+    }
+
+    // Convert server number to string and return
+    static char server[5];
+    sprintf(server, "%d", serverNumber);
+    return server;
+}
+// END ONLY IN SERVER CODE
+
+// helper method to to make 32bit integer
 char* addZeros(int num)
 {
     char* num_str = (char*)malloc(33 * sizeof(char)); // Allocate memory for string, including null terminator
@@ -318,6 +328,7 @@ char* addZeros(int num)
     return num_str;
 }
 
+// helper method to get fileSize
 int getFileSize(char* filePath)
 {
     int input_fd = open(filePath, O_RDONLY);
@@ -327,11 +338,11 @@ int getFileSize(char* filePath)
         exit(EXIT_FAILURE);
     }
     int c = lseek(input_fd, 0, SEEK_END);
-    // printf("%d this is \n",c);
     close(input_fd);
     return c;
 }
 
+// helper method to send file from server to client
 void sendFile(int client_socket, char* tarFile)
 {
     // printf("SEND FILE TARFILE NAME  :  %s \n",tarFile);
@@ -346,7 +357,7 @@ void sendFile(int client_socket, char* tarFile)
     // Convert the file size to binary string
     char* fileSizeString = addZeros(fileSize);
     // Logging size and binary
-    printf("%d File size %s", fileSize, fileSizeString);
+    // printf("%d File size %s", fileSize, fileSizeString);
     // opening the file to read
     int input_fd = open(fileName, O_RDONLY);
     if (input_fd == -1)
@@ -409,15 +420,13 @@ void getStatOfFile(int client_socket, char* filePath)
     sendString(client_socket, output);
 }
 
-void printData(char* s)
-{
-    printf("Inside pd with value %s\n", s);
-}
-
+// helper method to check null condition
 int checkCondition(char * command, char * subString){
     char* temp = strdup(command);
     return strstr(temp, subString)!= NULL;
 }
+
+// helper method to check client request for further processing
 void crequest(int new_socket)
 {
     printf("New Client Connected \n");
@@ -443,7 +452,7 @@ void crequest(int new_socket)
         }
 
         char* command = strdup(buffer);
-        printf("Client send this command %s \n", command);
+        printf("Client Request : %s \n", command);
         memset(buffer, 0, sizeof(buffer));
         // Run the appropriate functions based on the command
         if (strcmp(command, "quitc\n") == 0)
@@ -462,7 +471,7 @@ void crequest(int new_socket)
             // Construct the command with the filepath enclosed in double quotes
             asprintf(&command, "\"%s\"", filePath);
 
-            printf("File Path %s", filePath);
+            // printf("File Path %s", filePath);
             if (strcmp("-1", filePath) == 0)
             {
                 sendString(new_socket, "Couldnt Find File");
@@ -487,11 +496,7 @@ void crequest(int new_socket)
         }
         else if (checkCondition(command, "w24ft")) 
         {    
-            printf("Inside hayden\n");
-            printf("Command %s\n", command);
             char** result = split_string(command,"fileExtension");
-            printf("\nASDFsdf\n");
-            printf("\nThis is the data sent by the user %s\n", result[1]);
             char *temp2;
             asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
             // printf("\n Final Command to Run is %s \n", temp2);
@@ -514,11 +519,7 @@ void crequest(int new_socket)
         }
         else if (checkCondition(command, "w24fz")) 
         {    
-            printf("Inside hayden\n");
-            printf("Command %s\n", command);
             char** result = split_string(command,"fileSize");
-            printf("\nASDFsdf\n");
-            printf("\nThis is the data sent by the user %s\n", result[1]);
             char *temp2;
             asprintf(&temp2, "find ~/ -type f -not -path '*/.*' -size +%sc -size -%sc", result[1], result[2]);
             // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
@@ -543,11 +544,7 @@ void crequest(int new_socket)
         
         else if (checkCondition(command, "w24fda")) 
         {    
-            printf("Inside hayden\n");
-            printf("Command %s\n", command);
             char** result = split_string(command,"fileSize");
-            printf("\nASDFsdf\n");
-            printf("\nThis is the data sent by the user %s\n", result[1]);
             char *temp2;
             asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' | xargs -I{}  stat -c '%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 > date' | awk -F '*' '{print $2}'", result[1]);
             // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
@@ -571,11 +568,7 @@ void crequest(int new_socket)
         }
         else if (checkCondition(command, "w24fdb")) 
         {    
-            printf("Inside hayden\n");
-            printf("Command %s\n", command);
             char** result = split_string(command,"fileSize");
-            printf("\nASDFsdf\n");
-            printf("\nThis is the data sent by the user %s\n", result[1]);
             char *temp2;
             asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' | xargs -I{}  stat -c '%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 < date' | awk -F '*' '{print $2}'", result[1]);
             // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
@@ -598,12 +591,14 @@ void crequest(int new_socket)
             // free(unique_string);
         }
         else{
-            printf("NO mathces found\n");
+            printf("No matches found\n");
         }
     }
     kill(getppid(), SIGFPE);
     printf("client disconnected\n");
 }
+
+// siginthandler
 void sigChildHandler() {
     numberOfClients -= 1;
     updateLog();
