@@ -217,12 +217,13 @@ void tokenize_extensions(const char* str, char* a, char* b, char* c)
 
     free(str_copy);
 }
-void createTheTar(char* temp1)
+void createTheTar(char* temp1, char* tarFile)
 {
+    // printf("%s\n",tarFile);
     // printf("%s\n",temp1);
     char* temp;
 
-    asprintf(&temp, "tar -czvf temp.tar.gz --transform='s|.*/||' %s", temp1);
+    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s",tarFile, temp1);
     printf("%s\n", temp);
     system(temp);
 }
@@ -324,13 +325,15 @@ int getFileSize(char* filePath)
     return c;
 }
 
-void sendFile(int client_socket)
+void sendFile(int client_socket, char* tarFile)
 {
+    // printf("SEND FILE TARFILE NAME  :  %s \n",tarFile);
     sleep(2);
     char buffer[1024] = { 0 };
 
     // Sending Start of file byte sequence
-    char* fileName = "./temp.tar.gz";
+    // char* fileName = "./temp.tar.gz";
+    char* fileName = tarFile;
     // Calculating file size to send to client
     int fileSize = getFileSize(fileName);
     // Convert the file size to binary string
@@ -354,6 +357,7 @@ void sendFile(int client_socket)
         send(client_socket, tempBuffer, 1, 0);
     }
     close(input_fd);
+    unlink(tarFile);
 }
 
 // Helper method to send a String from the client to server
@@ -489,8 +493,17 @@ void crequest(int new_socket)
                continue;
             }
             sendString(new_socket, "yes");
-            createTheTar(resolve_paths(commandHelper(strdup(temp2))));
-            sendFile(new_socket);
+            
+            srand(time(NULL));
+            char* unique_string = (char*)malloc(100 * sizeof(char));
+            // Generate random number
+            int random_number = 100000000 + rand() % 900000000;
+             // Concatenate random number with the specified format
+            snprintf(unique_string, 100, "%d.tar.gz", random_number);
+
+            createTheTar(resolve_paths(commandHelper(strdup(temp2))),strdup(unique_string));
+            sendFile(new_socket,strdup(unique_string));
+            // free(unique_string);
 
 
         }
