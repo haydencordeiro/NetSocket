@@ -112,6 +112,35 @@ char *addZeros(int num)
     return num_str;
 }
 
+void checkCommand(char *command) {
+    // Tokenize the command to check the first part
+    char *token = strtok(command, " ");
+
+    if (strcmp(token, "dirlist") == 0) {
+        // Check for the dirlist command options
+        token = strtok(NULL, " ");
+        if (token != NULL && (strcmp(token, "-a") == 0 || strcmp(token, "-t") == 0)) {
+            printf("Valid command: %s\n", command);
+        } else {
+            printf("Usage: dirlist -a OR dirlist -t\n");
+        }
+    } else if (strcmp(token, "w24fn") == 0 || strcmp(token, "w24fz") == 0 || strcmp(token, "w24ft") == 0 || strcmp(token, "w24fdb") == 0 || strcmp(token, "w24fda") == 0) {
+        // These commands have specific formats
+        printf("Valid command: %s\n", command);
+    } else if (strcmp(token, "quitc") == 0) {
+        printf("Valid command: %s\n", command);
+    } else {
+        printf("Usage:\n");
+        printf("dirlist -a\n");
+        printf("dirlist -t\n");
+        printf("w24fn filename\n");
+        printf("w24fz size1 size2\n");
+        printf("w24ft <extension list>\n");
+        printf("w24fdb date\n");
+        printf("w24fda date\n");
+        printf("quitc\n");
+    }
+}
 int main()
 {
     int client_socket = create_socket();
