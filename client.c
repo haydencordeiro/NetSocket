@@ -178,7 +178,7 @@ int main()
             }
             receiveFileHelper(client_socket);
         }
-         else if (strstr(command, "w24db") !=NULL)
+         else if (strstr(command, "w24da") !=NULL)
         {
             
             printf("client\n");
