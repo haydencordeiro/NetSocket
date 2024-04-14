@@ -301,7 +301,7 @@ int checkCommand(char* command) {
             }
 
             // More than 4 extension not allowed
-            if (result[3] != NULL) {
+            if (result[4] != NULL) {
                 printf("Usage: w24fz [ext 1, ext 2, ext 3]; support only upto 3 extension");
                 return 0;
             }
@@ -393,7 +393,7 @@ int main()
             continue;
         }
 
-        printf("user entered %s\n", command);
+        // printf("user entered %s\n", command);
         // Send length of the command to be received
         send(client_socket, addZeros(strlen(command)), 32, 0);
 
