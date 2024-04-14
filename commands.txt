@@ -1,0 +1,11 @@
+sudo systemctl daemon-reload
+sudo systemctl start grafana-server
+sudo systemctl start kafka
+sudo docker run --network=host -p 8080:8080 -e KAFKA_BROKERS=localhost:9092 docker.redpanda.com/redpandadata/console:latest
+
+sudo systemctl status grafana-server
+sudo systemctl status zookeeper
+sudo systemctl status kafka
+
+http://localhost:3000/ -> Grafana
+http://localhost:8080/ -> RedPanda
