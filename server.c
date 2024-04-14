@@ -371,7 +371,7 @@ void sendFile(int client_socket, char* tarFile)
 void sendString(int client_socket, char* s)
 {
     int lenght = strlen(s);
-    printf("Lenght of s %d\n", lenght);
+    // printf("Lenght of s %d\n", lenght);
     // Conver the lenght to a string of lenght 8 to send to the client
     char* lenghtString = addZeros(lenght);
     // Send Length
@@ -681,7 +681,7 @@ int main()
         // START ONLY IN SERVER CODE
         char buffer[2] = { 0 };
         read(new_socket, buffer, 1);
-        printf("Server Received %s\n", buffer);
+        // printf("Server Received %s\n", buffer);
         if (strstr(buffer, "0") != NULL) {
             sendString(new_socket, whichServerToConnect());
             continue;

@@ -128,6 +128,7 @@ int main()
     {
         // char buffer[1024] = {0};
         // scanf("%[^\n]s", command);
+        printf("\nCLIENT: ");
         fgets(command, 1024, stdin);
 
         printf("user entered %s\n", command);
