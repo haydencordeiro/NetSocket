@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <math.h>
-
 #include <unistd.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #define PORT 8081
 
@@ -43,32 +43,6 @@ void connect_to_server(int client_socket, int portNumber)
         perror("Connection failed");
         exit(EXIT_FAILURE);
     }
-}
-
-// check if date format taken as input is valid or not
-int isValidDateFormat(const char* input) {
-    int year, day, month;
-    char separator1, separator2;
-
-    // Parse the input string
-    if (sscanf(input, "%d-%d-%d", &year, &day, &month) != 3) {
-        return 0; // Parsing failed
-    }
-
-    // Check if the separators are correct
-    if (sscanf(input, "%d%c%d%c%d", &year, &separator1, &day, &separator2, &month) != 5) {
-        return 0; // Separators are incorrect
-    }
-    if (separator1 != '-' || separator2 != '-') {
-        return 0; // Separator is not '-'
-    }
-
-    // Check if year, day, and month values are valid
-    if (year < 1000 || year > 9999 || day < 1 || day > 31 || month < 1 || month > 12) {
-        return 0; // Values are out of range
-    }
-
-    return 1; // Format is valid
 }
 
 // function to receive tarfiles from server to client
@@ -217,6 +191,16 @@ char** splitString(char* str, char* delimenter)
     return tokens;
 }
 
+// check if date format taken as input is valid or not
+int isValidDateFormat(const char* input) {
+    char** date = splitString(input, "-");
+    if(date[0] == NULL || date[0] == NULL || date[0] == NULL)
+    {
+        return 0;
+    }
+    return 1; // Format is valid
+}
+
 // check if input is an integer or not
 int isInteger(const char* input) {
     char c;
@@ -352,9 +336,9 @@ int checkCommand(char* command) {
                 return 0;
             }
 
-            // More than 4 extension not allowed
+            // Only one date allowed
             if (result[2] != NULL) {
-                printf("Usage: w24fda [date]; support only upto 3 extension");
+                printf("Usage: w24fda [date]; supports only one date");
                 return 0;
             }
             if (!isValidDateFormat(result[1])) {
@@ -427,7 +411,6 @@ int main()
         else if (strstr(command, "w24ft") != NULL)
         {
 
-            printf("client\n");
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
@@ -438,7 +421,6 @@ int main()
         else if (strstr(command, "w24fz") != NULL)
         {
 
-            printf("client\n");
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
@@ -449,7 +431,6 @@ int main()
         else if (strstr(command, "w24fda") != NULL)
         {
 
-            printf("client\n");
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
@@ -460,7 +441,6 @@ int main()
         else if (strstr(command, "w24fdb") != NULL)
         {
 
-            printf("client\n");
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
                 printf("No file Found\n");
