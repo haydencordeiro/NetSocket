@@ -540,6 +540,35 @@ void crequest(int new_socket)
             sendFile(new_socket,strdup(unique_string));
             // free(unique_string);
         }
+        
+        else if (checkCondition(command, "w24db")) 
+        {    
+            printf("Inside hayden\n");
+            printf("Command %s\n", command);
+            char** result = split_string(command,"fileSize");
+            printf("\nASDFsdf\n");
+            printf("\nThis is the data sent by the user %s\n", result[1]);
+            char *temp2;
+            asprintf(&temp2, "find ~/ -type f ! -path  '*/.*' | xargs -I{}  stat -c '%W*{}' {} | awk -v date=$(date -d %s +%%s) -F'*' '$1 > date -1' | awk -F '*' '{print $2}'", result[1]);
+            // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
+            // printf("\n Final Command to Run is %s \n", temp2);
+            if(strlen(commandHelper(strdup(temp2))) == 0){
+               sendString(new_socket, "no");
+               continue;
+            }
+            sendString(new_socket, "yes");
+            
+            srand(time(NULL));
+            char* unique_string = (char*)malloc(100 * sizeof(char));
+            // Generate random number
+            int random_number = 100000000 + rand() % 900000000;
+             // Concatenate random number with the specified format
+            snprintf(unique_string, 100, "%d.tar.gz", random_number);
+
+            createTheTar(resolve_paths(commandHelper(strdup(temp2))),strdup(unique_string));
+            sendFile(new_socket,strdup(unique_string));
+            // free(unique_string);
+        }
         else{
             printf("NO mathces found\n");
         }
