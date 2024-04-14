@@ -125,7 +125,7 @@ char** splitString(char* str, char* delimenter)
 }
 
 
-char** split_string(const char* input)
+char** split_string(const char* input, char* option)
 {
     char** words = malloc(4 * sizeof(char*));
     if (words == NULL)
@@ -154,54 +154,14 @@ char** split_string(const char* input)
         }
 
         remove_special_chars(token); // Remove special characters if needed
+        if (strcmp(option,"fileExtension")==0)
+        {
         strcpy(words[i], "*.");      // Add ".*" before the word
-        strcat(words[i], token);     // Concatenate the word itself
-        token = strtok(NULL, " ");
-        i++;
-    }
-
-    // Fill remaining elements with NULL
-    while (i < 4)
-    {
-        words[i] = "";
-        i++;
-    }
-
-    free(copy);
-
-    return words;
-}
-
-char** split_string2(const char* input)
-{
-    char** words = malloc(4 * sizeof(char*));
-    if (words == NULL)
-    {
-        printf("Memory allocation failed\n");
-        exit(EXIT_FAILURE);
-    }
-
-    char* copy = strdup(input);
-    if (copy == NULL)
-    {
-        printf("Memory allocation failed\n");
-        exit(EXIT_FAILURE);
-    }
-
-    char* token = strtok(copy, " ");
-    int i = 0;
-    while (token != NULL && i < 4)
-    {
-        // Allocate memory for the word with "*." prefix
-        words[i] = malloc(strlen(token) + 3); // 3 for "*." and null terminator
-        if (words[i] == NULL)
-        {
-            printf("Memory allocation failed\n");
-            exit(EXIT_FAILURE);
         }
-
-        remove_special_chars(token); // Remove special characters if needed
+            if (strcmp(option,"fileSize")==0)
+        {
         strcpy(words[i], "");      // Add ".*" before the word
+        }    
         strcat(words[i], token);     // Concatenate the word itself
         token = strtok(NULL, " ");
         i++;
@@ -529,7 +489,7 @@ void crequest(int new_socket)
         {    
             printf("Inside hayden\n");
             printf("Command %s\n", command);
-            char** result = split_string(command);
+            char** result = split_string(command,"fileExtension");
             printf("\nASDFsdf\n");
             printf("\nThis is the data sent by the user %s\n", result[1]);
             char *temp2;
@@ -556,7 +516,7 @@ void crequest(int new_socket)
         {    
             printf("Inside hayden\n");
             printf("Command %s\n", command);
-            char** result = split_string2(command);
+            char** result = split_string(command,"fileSize");
             printf("\nASDFsdf\n");
             printf("\nThis is the data sent by the user %s\n", result[1]);
             char *temp2;
