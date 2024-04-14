@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,12 +50,12 @@ void connect_to_server(int client_socket, int portNumber)
 void receiveFileHelper(int client_socket)
 {
     char buffer[1024] = { 0 };
-    printf("insdie\n");
+    // printf("insdie\n");
     // Reading size of file
     read(client_socket, buffer, 32);
     // converting the binary string to int
     int fileSize = atoi(buffer);
-    printf("Start sequence: %s %d\n", buffer, fileSize);
+    // printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
     unlink("./temp.tar.gz");
@@ -194,7 +195,7 @@ char** splitString(char* str, char* delimenter)
 // check if date format taken as input is valid or not
 int isValidDateFormat(char* input) {
     char** date = splitString(input, "-");
-    if(date[0] == NULL || date[0] == NULL || date[0] == NULL)
+    if (date[0] == NULL || date[0] == NULL || date[0] == NULL)
     {
         return 0;
     }
@@ -370,12 +371,19 @@ int main()
     int client_socket = create_socket();
     connect_to_server(client_socket, PORT);
     send(client_socket, "0", 1, 0);
-    int newPort = atoi(receiveDataHelper(client_socket));
+    char* newPortStr = (receiveDataHelper(client_socket));
+    int newPort = atoi(newPortStr);
     close(client_socket);
 
     client_socket = create_socket();
     connect_to_server(client_socket, newPort);
-    send(client_socket, "1", 1, 0);
+    char* serverPort;
+    asprintf(&serverPort, "%d", PORT);
+    // Only send to server1 to indicate request and not load balancing
+    if(strcmp(newPortStr, serverPort)==0)
+    {
+        send(client_socket, "1", 1, 0);
+    }
     char command[1024];
     while (1)
     {
