@@ -156,7 +156,18 @@ int main()
             close(client_socket);
             return 0;
         }
-        else if (strstr(command, "hayden") !=NULL)
+        else if (strstr(command, "w24ft") !=NULL)
+        {
+            
+            printf("client\n");
+            if (strcmp(receiveDataHelper(client_socket),"no")==0)
+            {
+                printf("No file Found\n");
+                continue;
+            }
+            receiveFileHelper(client_socket);
+        }
+        else if (strstr(command, "w24fz") !=NULL)
         {
             
             printf("client\n");
