@@ -350,7 +350,8 @@ int checkCommand(char* command) {
 
     }
     else if (strcmp(token, "quitc") == 0) {
-        printf("Valid command: %s\n", command);
+        return 1;
+        // printf("Valid command: %s\n", command);
     }
     else {
         printf("Usage:\n");
