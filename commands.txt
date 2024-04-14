@@ -9,3 +9,6 @@ sudo systemctl status kafka
 
 http://localhost:3000/ -> Grafana
 http://localhost:8080/ -> RedPanda
+
+
+Delete kafka/logs when zookeeper is restarted

@@ -53,7 +53,7 @@ while True:
     
     # Encode the message as JSON and then as bytes
     message_bytes = json.dumps(message).encode('utf-8')
-    
+    print("cpu_percent", cpu_percent)
     # Publish the message to Kafka topic
     producer.send(topic, value=message_bytes)
     

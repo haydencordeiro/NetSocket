@@ -44,6 +44,7 @@ def write_to_influxdb(message):
 for message in consumer:
     # Decode the message value from bytes to dictionary
     message_value = eval(message.value.decode('utf-8'))
+    print(message_value)
     
     # Write the message data to InfluxDB
     write_to_influxdb(message_value)

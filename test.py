@@ -57,7 +57,7 @@ while True:
         .field("client_count", get_number_of_clients())
         .field("server_active_clients", get_active_clients('server.txt'))
         .field("mirror1_active_clients", get_active_clients('mirror1.txt'))
-        .field("mirror2_acservertive_clients", get_active_clients('mirror2.txt'))
+        .field("mirror2_active_clients", get_active_clients('mirror2.txt'))
     )
     print(get_active_clients('server.txt'))
     
