@@ -429,7 +429,7 @@ void crequest(int new_socket)
         if (strcmp(command, "quitc\n") == 0)
         {
             // If the client sends "quitc", exit the loop and close the connection
-            printf("Sever Died\n");
+            // printf("Sever Died\n");
             break;
         }
         else if (checkCondition(command, "w24fn"))
