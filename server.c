@@ -279,8 +279,8 @@ void createTheTar(char* temp1, char* tarFile)
     // printf("%s\n",temp1);
     char* temp;
 
-    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s",tarFile, temp1);
-    printf("%s\n", temp);
+    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s 2>/dev/null",tarFile, temp1);
+
     commandHelper(temp);
 }
 
@@ -523,7 +523,7 @@ void crequest(int new_socket)
         {    
             char** result = split_string(command,"fileSize");
             char *temp2;
-            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' -size +%sc -size -%sc", result[1], result[2]);
+            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' -size +%dc -size -%dc", atoi(result[1]) - 1, atoi(result[2]) + 1);
             // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
             // printf("\n Final Command to Run is %s \n", temp2);
             if(strlen(commandHelper(strdup(temp2))) == 0){
