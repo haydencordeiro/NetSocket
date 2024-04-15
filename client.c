@@ -229,7 +229,11 @@ int checkCommand(char* command) {
     char* token = strdup(command);
     char** result = splitString(token, " ");
     if (strstr(token, "dirlist") != NULL) {
-        if (strcmp(result[0], "dirlist") != 0) {
+        if(result[2]!=NULL){
+            printf("Usage: dirlist [-a|-t]\n");
+            return 0;
+        }
+        else if (strcmp(result[0], "dirlist") != 0) {
             printf("Did you mean dirlist?\n");
         }
         if (result[1] != NULL && strcmp(result[1], "-a") == 0) {
