@@ -207,7 +207,7 @@ int isValidDateFormat(char* input) {
     if(strlen(date[0])!=4){
         return 0;
     }
-    if(strlen(date[1])!=2 || atoi(date[1]) < 0 || atoi(date[1]) > 13 ){
+    if(strlen(date[1])!=2 || atoi(date[1]) < 0 || atoi(date[1]) > 12 ){
         return 0;
     }
     if(strlen(date[2])!=2 || atoi(date[2]) < 0 || atoi(date[2]) > 31 ){
