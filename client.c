@@ -392,7 +392,7 @@ int main()
     char command[1024];
     while (1)
     {
-        printf("\nCLIENT: ");
+        printf("\nclient24$ ");
         fgets(command, 1024, stdin);
         if (checkCommand(command) == 0) {
             continue;
