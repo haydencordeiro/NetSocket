@@ -194,18 +194,6 @@ void tokenize_extensions(const char* str, char* a, char* b, char* c)
     free(str_copy);
 }
 
-// method to create tarfile in serverside with unique id
-void createTheTar(char* temp1, char* tarFile)
-{
-    // printf("%s\n",tarFile);
-    // printf("%s\n",temp1);
-    char* temp;
-
-    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s",tarFile, temp1);
-    printf("%s\n", temp);
-    system(temp);
-}
-
 // helper method for escape sequence space to cleanup the string
 char* resolve_paths(const char* paths)
 {
@@ -282,6 +270,18 @@ char* commandHelper(char* s) {
         result[total_read] = '\0';
         return strdup(result);
     }
+}
+
+// method to create tarfile in serverside with unique id
+void createTheTar(char* temp1, char* tarFile)
+{
+    // printf("%s\n",tarFile);
+    // printf("%s\n",temp1);
+    char* temp;
+
+    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s",tarFile, temp1);
+    printf("%s\n", temp);
+    commandHelper(temp);
 }
 
 // Update Log
