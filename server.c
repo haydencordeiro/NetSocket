@@ -402,7 +402,7 @@ char* searchFiles(char* fileName)
     char* command;
     asprintf(&command, "find ~/ -name %s", fileName);
     char* temp = commandHelper(command);
-    printf("File Found DAta %s %s\n", command, temp);
+    // printf("File Found DAta %s %s\n", command, temp);
     if (strlen(temp) == 0)
         return strdup("-1");
     char* token = strtok(temp, "\n");
@@ -414,7 +414,7 @@ void getStatOfFile(int client_socket, char* filePath)
 {
     char* command;
     asprintf(&command, "stat -c '%%n\n%%s\n%%w\n%%A' %s", filePath);
-    printf("Running this command %s\n", command);
+    // printf("Running this command %s\n", command);
     char** result = splitString(commandHelper(command), "\n");
     char* output;
     asprintf(&output, "FilePath: %s\nFile Size(Bytes): %s\nBirth Time: %s\nAccess Rights: %s\n", result[0], result[1], result[2], result[3]);
@@ -476,7 +476,7 @@ void crequest(int new_socket)
             // printf("File Path %s", filePath);
             if (strcmp("-1", filePath) == 0)
             {
-                sendString(new_socket, "Couldnt Find File");
+                sendString(new_socket, "File not found");
             }
             else
             {

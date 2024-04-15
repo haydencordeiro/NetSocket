@@ -5,9 +5,10 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <math.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define PORT 8081
 
@@ -201,6 +202,15 @@ int isValidDateFormat(char* input) {
     char** date = splitString(input, "-");
     if (date[0] == NULL || date[0] == NULL || date[0] == NULL)
     {
+        return 0;
+    }
+    if(strlen(date[0])!=4){
+        return 0;
+    }
+    if(strlen(date[1])!=2 || atoi(date[1]) < 0 || atoi(date[1]) > 13 ){
+        return 0;
+    }
+    if(strlen(date[2])!=2 || atoi(date[2]) < 0 || atoi(date[2]) > 31 ){
         return 0;
     }
     return 1; // Format is valid
@@ -426,7 +436,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
@@ -436,7 +446,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
@@ -446,7 +456,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
@@ -456,7 +466,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
