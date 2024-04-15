@@ -58,8 +58,12 @@ void receiveFileHelper(int client_socket)
     // printf("Start sequence: %s %d\n", buffer, fileSize);
     memset(buffer, 0, sizeof(buffer));
     // Creating and opening the file for writing
-    unlink("./temp.tar.gz");
-    char* outputFilename = "./temp.tar.gz";
+    char path[100];
+    snprintf(path, sizeof(path), "%s%s", getenv("HOME"), "/w24project");
+    mkdir(path, 0777);
+    char outputFilename[500];
+    snprintf(outputFilename, sizeof(path), "%s%s", getenv("HOME"), "/w24project/temp.tar.gz");
+
     int output_fd = open(outputFilename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (output_fd == -1)
     {
