@@ -1,6 +1,5 @@
 
 # NetSocket
-
 ![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)
 ![Sockets](https://img.shields.io/badge/Sockets-007396?style=for-the-badge&logo=socket.io&logoColor=white)
 ![Graphana](https://img.shields.io/badge/Graphana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
@@ -23,11 +22,12 @@ The project adheres to strict guidelines, including individual or team-based pro
 Overall, this project offers a comprehensive solution for scalable client-server communication, incorporating load balancing and real-time monitoring functionalities to meet the demands of modern networked environments.
 
 ## Screenshots
-
 <img src="./screenshots/1.jpg" width="60%" /> <br>
 
-## Contributions <a id="contributions"></a>
+## Demo
+[![DEMO](https://img.youtube.com/vi/R24t-8zrYQU/0.jpg)](https://www.youtube.com/watch?v=R24t-8zrYQU)
 
+## Contributions <a id="contributions"></a>
 ![Alt](https://repobeats.axiom.co/api/embed/8f067b3de758710566b9d73f68f1778424ce633d.svg "Repobeats analytics image")
 
 ## Contributors <a id="contributors"></a>
