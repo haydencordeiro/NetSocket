@@ -5,9 +5,10 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <math.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define PORT 8081
 
@@ -199,8 +200,17 @@ char** splitString(char* str, char* delimenter)
 // check if date format taken as input is valid or not
 int isValidDateFormat(char* input) {
     char** date = splitString(input, "-");
-    if (date[0] == NULL || date[0] == NULL || date[0] == NULL)
+    if (date[0] == NULL || date[1] == NULL || date[2] == NULL)
     {
+        return 0;
+    }
+    if(strlen(date[0])!=4){
+        return 0;
+    }
+    if(strlen(date[1])!=2 || atoi(date[1]) < 0 || atoi(date[1]) > 12 ){
+        return 0;
+    }
+    if(strlen(date[2])!=2 || atoi(date[2]) < 0 || atoi(date[2]) > 31 ){
         return 0;
     }
     return 1; // Format is valid
@@ -219,7 +229,11 @@ int checkCommand(char* command) {
     char* token = strdup(command);
     char** result = splitString(token, " ");
     if (strstr(token, "dirlist") != NULL) {
-        if (strcmp(result[0], "dirlist") != 0) {
+        if(result[2]!=NULL){
+            printf("Usage: dirlist [-a|-t]\n");
+            return 0;
+        }
+        else if (strcmp(result[0], "dirlist") != 0) {
             printf("Did you mean dirlist?\n");
         }
         if (result[1] != NULL && strcmp(result[1], "-a") == 0) {
@@ -426,7 +440,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
@@ -436,7 +450,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
@@ -446,7 +460,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);
@@ -456,7 +470,7 @@ int main()
 
             if (strcmp(receiveDataHelper(client_socket), "no") == 0)
             {
-                printf("No file Found\n");
+                printf("No file found\n");
                 continue;
             }
             receiveFileHelper(client_socket);

@@ -279,8 +279,8 @@ void createTheTar(char* temp1, char* tarFile)
     // printf("%s\n",temp1);
     char* temp;
 
-    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s",tarFile, temp1);
-    printf("%s\n", temp);
+    asprintf(&temp, "tar -czvf %s --transform='s|.*/||' %s 2>/dev/null",tarFile, temp1);
+
     commandHelper(temp);
 }
 
@@ -371,7 +371,7 @@ char* searchFiles(char* fileName)
     char* command;
     asprintf(&command, "find ~/ -name %s", fileName);
     char* temp = commandHelper(command);
-    printf("File Found DAta %s %s\n", command, temp);
+    // printf("File Found DAta %s %s\n", command, temp);
     if (strlen(temp) == 0)
         return strdup("-1");
     char* token = strtok(temp, "\n");
@@ -383,7 +383,7 @@ void getStatOfFile(int client_socket, char* filePath)
 {
     char* command;
     asprintf(&command, "stat -c '%%n\n%%s\n%%w\n%%A' %s", filePath);
-    printf("Running this command %s\n", command);
+    // printf("Running this command %s\n", command);
     char** result = splitString(commandHelper(command), "\n");
     char* output;
     asprintf(&output, "FilePath: %s\nFile Size(Bytes): %s\nBirth Time: %s\nAccess Rights: %s\n", result[0], result[1], result[2], result[3]);
@@ -445,7 +445,7 @@ void crequest(int new_socket)
             // printf("File Path %s", filePath);
             if (strcmp("-1", filePath) == 0)
             {
-                sendString(new_socket, "Couldnt Find File");
+                sendString(new_socket, "File not found");
             }
             else
             {
@@ -492,7 +492,7 @@ void crequest(int new_socket)
         {    
             char** result = split_string(command,"fileSize");
             char *temp2;
-            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' -size +%sc -size -%sc", result[1], result[2]);
+            asprintf(&temp2, "find ~/ -type f -not -path '*/.*' -size +%dc -size -%dc", atoi(result[1]) - 1, atoi(result[2]) + 1);
             // asprintf(&temp2, "find ~/ -type f -not -path '*/.*' \\( -name '%s' -o -name '%s' -o -name '%s'  \\)", result[1], result[2], result[3]);
             // printf("\n Final Command to Run is %s \n", temp2);
             if(strlen(commandHelper(strdup(temp2))) == 0){
